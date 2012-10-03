@@ -205,7 +205,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'ipv6_enable="YES"',
             'ipv6_network_interfaces="xn0"',
             'defaultrouter="10.127.31.1"',
-            'ipv6_defaultrouter="ffff::1"',
+            'ipv6_defaultrouter="ffff::1%xn0"',
             ''])
 
         filedata = network._create_rcconf_file(StringIO(inputdata),
@@ -280,7 +280,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'ipv6_enable="YES"',
             'ipv6_network_interfaces="xn0"',
             'defaultrouter="10.127.31.1"',
-            'ipv6_defaultrouter="ffff::1"',
+            'ipv6_defaultrouter="ffff::1%xn0"',
             ''])
 
         filedata = network._create_rcconf_file(StringIO(inputdata),
