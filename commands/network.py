@@ -190,6 +190,8 @@ class NetworkCommands(commands.CommandBase):
             if mac not in by_macaddr:
                 raise RuntimeError('Unknown interface MAC %s' % mac)
 
+            ifconfig['label'] = interface.get('label')
+
             up, ifname = by_macaddr[mac]
 
             # Record if the interface is up already

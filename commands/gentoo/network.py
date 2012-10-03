@@ -125,12 +125,16 @@ def _get_file_data_legacy(interfaces):
     for ifname in ifnames:
         interface = interfaces[ifname]
 
+        label = interface['label']
+
         ip4s = interface['ip4s']
         ip6s = interface['ip6s']
 
         gateway4 = interface['gateway4']
         gateway6 = interface['gateway6']
 
+        if label:
+            network_data += '# Label %s\n' % label
         network_data += 'config_%s=(\n' % ifname
 
         for ip in ip4s:
@@ -180,6 +184,8 @@ def _get_file_data_openrc(interfaces):
     for ifname in ifnames:
         interface = interfaces[ifname]
 
+        label = interface['label']
+
         ip4s = interface['ip4s']
         ip6s = interface['ip6s']
 
@@ -197,6 +203,8 @@ def _get_file_data_openrc(interfaces):
         for ip in ip6s:
             iface_data.append('%s/%s' % (ip['address'], ip['prefixlen']))
 
+        if label:
+            network_data += '# Label %s\n' % label
         network_data += 'config_%s="%s"\n' % (ifname, '\n'.join(iface_data))
 
         route_data = []

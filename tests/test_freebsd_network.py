@@ -33,14 +33,16 @@ class TestFreeBSDRCConf(agent_test.TestCase):
     def test_ipv4_0_aliases(self):
         """Test setting public IPv4 for FreeBSD networking"""
 
-        interfaces = {"xn0":{"ip4s":[{"address":"10.127.31.38",
+        interfaces = {"xn0":{"label": "public",
+                             "ip4s":[{"address":"10.127.31.38",
                                       "netmask":"255.255.255.0"}],
                              "ip6s":[],
                              "routes":[],
                              "mac":"40:40:8f:1e:a0:0a",
                              "gateway4":"10.127.31.1",
                              "dns":["10.6.24.4", "10.6.24.5"]},
-                      "xn1":{"ip4s":[{"address":"192.168.2.30",
+                      "xn1":{"label": "private",
+                             "ip4s":[{"address":"192.168.2.30",
                                       "netmask":"255.255.224.0"}],
                              "ip6s":[],
                              "routes":[{"network":"10.176.0.0",
@@ -78,7 +80,9 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'sshd_enable="YES"',
             'dhcpd_enable="NO"',
             'hostname=myhostname',
+            '# Label public',
             'ifconfig_xn0="10.127.31.38 netmask 255.255.255.0 up"',
+            '# Label private',
             'ifconfig_xn1="192.168.2.30 netmask 255.255.224.0 up"',
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
@@ -91,7 +95,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
     def test_ipv4_2_aliases(self):
         """Test setting public IPv4 with an IP alias"""
 
-        interfaces = {"xn0":{"ip4s":[{"address":"10.127.31.38",
+        interfaces = {"xn0":{"label": "public",
+                             "ip4s":[{"address":"10.127.31.38",
                                       "netmask":"255.255.255.0"},
                                      {"address":"10.127.32.38",
                                       "netmask":"255.255.255.0"},
@@ -102,7 +107,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                              "mac":"40:40:8f:1e:a0:0a",
                              "gateway4":"10.127.31.1",
                              "dns":["10.6.24.4", "10.6.24.5"]},
-                      "xn1":{"ip4s":[{"address":"192.168.2.30",
+                      "xn1":{"label": "private",
+                             "ip4s":[{"address":"192.168.2.30",
                                       "netmask":"255.255.224.0"}],
                              "ip6s":[],
                              "routes":[{"network":"10.176.0.0",
@@ -140,9 +146,11 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'sshd_enable="YES"',
             'dhcpd_enable="NO"',
             'hostname=myhostname',
+            '# Label public',
             'ifconfig_xn0="10.127.31.38 netmask 255.255.255.0 up"',
             'ifconfig_xn0_alias0="10.127.32.38 netmask 255.255.255.0"',
             'ifconfig_xn0_alias1="10.127.32.39 netmask 255.255.255.255"',
+            '# Label private',
             'ifconfig_xn1="192.168.2.30 netmask 255.255.224.0 up"',
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
@@ -155,7 +163,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
     def test_ipv4and6_0_aliases(self):
         """Test setting public IPv4 for FreeBSD networking"""
 
-        interfaces = {"xn0":{"ip4s":[{"address":"10.127.31.38",
+        interfaces = {"xn0":{"label": "public",
+                             "ip4s":[{"address":"10.127.31.38",
                                       "netmask":"255.255.255.0"}],
                              "ip6s":[{"address":"ffff::2",
                                       "prefixlen":"96"}],
@@ -164,7 +173,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                              "gateway4":"10.127.31.1",
                              "gateway6":"ffff::1",
                              "dns":["10.6.24.4", "10.6.24.5"]},
-                      "xn1":{"ip4s":[{"address":"192.168.2.30",
+                      "xn1":{"label": "private",
+                             "ip4s":[{"address":"192.168.2.30",
                                       "netmask":"255.255.224.0"}],
                              "ip6s":[],
                              "routes":[{"network":"10.176.0.0",
@@ -202,8 +212,10 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'sshd_enable="YES"',
             'dhcpd_enable="NO"',
             'hostname=myhostname',
+            '# Label public',
             'ifconfig_xn0="10.127.31.38 netmask 255.255.255.0 up"',
             'ipv6_ifconfig_xn0="ffff::2/96"',
+            '# Label private',
             'ifconfig_xn1="192.168.2.30 netmask 255.255.224.0 up"',
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
@@ -219,7 +231,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
     def test_ipv4and6_2_aliases(self):
         """Test setting public IPv4 with an IP alias"""
 
-        interfaces = {"xn0":{"ip4s":[{"address":"10.127.31.38",
+        interfaces = {"xn0":{"label": "public",
+                             "ip4s":[{"address":"10.127.31.38",
                                       "netmask":"255.255.255.0"},
                                      {"address":"10.127.32.38",
                                     "netmask":"255.255.255.0"},
@@ -236,7 +249,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                              "gateway4":"10.127.31.1",
                              "gateway6":"ffff::1",
                              "dns":["10.6.24.4", "10.6.24.5"]},
-                      "xn1":{"ip4s":[{"address":"192.168.2.30",
+                      "xn1":{"label": "private",
+                             "ip4s":[{"address":"192.168.2.30",
                                       "netmask":"255.255.224.0"}],
                              "ip6s":[],
                              "routes":[{"network":"10.176.0.0",
@@ -274,12 +288,14 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'sshd_enable="YES"',
             'dhcpd_enable="NO"',
             'hostname=myhostname',
+            '# Label public',
             'ifconfig_xn0="10.127.31.38 netmask 255.255.255.0 up"',
             'ipv6_ifconfig_xn0="ffff::2/96"',
             'ifconfig_xn0_alias0="10.127.32.38 netmask 255.255.255.0"',
             'ipv6_ifconfig_xn0_alias0="ffff::1:2/96"',
             'ifconfig_xn0_alias1="10.127.32.39 netmask 255.255.255.255"',
             'ipv6_ifconfig_xn0_alias1="ffff::1:3/128"',
+            '# Label private',
             'ifconfig_xn1="192.168.2.30 netmask 255.255.224.0 up"',
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \

@@ -125,6 +125,8 @@ def _get_file_data(ifname_prefix, interface):
     Return data for (sub-)interfaces and routes
     """
 
+    label = interface['label']
+
     ip4s = interface['ip4s']
     ip6s = interface['ip6s']
 
@@ -143,7 +145,9 @@ def _get_file_data(ifname_prefix, interface):
         else:
             ifname = ifname_prefix
 
-        iface_data = "# Automatically generated, do not edit\n"
+        iface_data = "# Automatically generated, do not edit\n\n"
+        if label:
+            iface_data += "# Label %s\n" % label
         iface_data += "DEVICE=%s\n" % ifname
         iface_data += "BOOTPROTO=static\n"
         iface_data += "HWADDR=%s\n" % interface['mac']

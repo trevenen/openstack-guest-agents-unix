@@ -36,7 +36,8 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def _run_test(self, dist, infiles=None, version=None, **configs):
         interfaces = {}
         for ifname, options in configs.iteritems():
-            interface = {'mac': options['hwaddr']}
+            interface = {'mac': options['hwaddr'],
+                         'label': options['label']}
 
             ip4s = []
             for ip, netmask in options.get('ipv4', []):
@@ -74,6 +75,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_redhat_ipv4(self):
         """Test setting public IPv4 for Red Hat networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -85,6 +87,8 @@ class TestInterfacesUpdates(agent_test.TestCase):
         generated = outfiles['ifcfg-eth0'].rstrip().split('\n')
         expected = [
             '# Automatically generated, do not edit',
+            '',
+            '# Label public',
             'DEVICE=eth0',
             'BOOTPROTO=static',
             'HWADDR=00:11:22:33:44:55',
@@ -101,6 +105,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_redhat_ipv6(self):
         """Test setting public IPv6 for Red Hat networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -112,6 +117,8 @@ class TestInterfacesUpdates(agent_test.TestCase):
         generated = outfiles['ifcfg-eth0'].rstrip().split('\n')
         expected = [
             '# Automatically generated, do not edit',
+            '',
+            '# Label public',
             'DEVICE=eth0',
             'BOOTPROTO=static',
             'HWADDR=00:11:22:33:44:55',
@@ -128,6 +135,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_debian_ipv4(self):
         """Test setting public IPv4 for Debian networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -145,6 +153,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'auto lo',
             'iface lo inet loopback',
             '',
+            '# Label public',
             'auto eth0',
             'iface eth0 inet static',
             '    address 192.0.2.42',
@@ -157,6 +166,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_debian_ipv6(self):
         """Test setting public IPv6 for Debian networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -174,6 +184,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'auto lo',
             'iface lo inet loopback',
             '',
+            '# Label public',
             'auto eth0',
             'iface eth0 inet6 static',
             '    address 2001:db8::42',
@@ -193,6 +204,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
                 'ROUTES=(gateway)']) + '\n'
         }
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -221,6 +233,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
                 'ROUTES=(gateway6)']) + '\n'
         }
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -247,6 +260,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
                 'DAEMONS=(foo network bar)']) + '\n'
         }
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -266,6 +280,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
         self.assertTrue('/etc/network.d/eth0' in outfiles)
         generated = outfiles['/etc/network.d/eth0'].rstrip().split('\n')
         expected = [
+            '# Label public',
             'CONNECTION="ethernet"',
             'INTERFACE=eth0',
             'IP="static"',
@@ -284,6 +299,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
                 'DAEMONS=(foo network bar)']) + '\n'
         }
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -302,6 +318,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
         self.assertTrue('/etc/network.d/eth0' in outfiles)
         generated = outfiles['/etc/network.d/eth0'].rstrip().split('\n')
         expected = [
+            '# Label public',
             'CONNECTION="ethernet"',
             'INTERFACE=eth0',
             'IP6="static"',
@@ -314,6 +331,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_gentoo_legacy_ipv4(self):
         """Test setting public IPv4 for Gentoo legacy networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -327,6 +345,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             '# Automatically generated, do not edit',
             'modules=( "ifconfig" )',
             '',
+            '# Label public',
             'config_eth0=(',
             '    "192.0.2.42 netmask 255.255.255.0"',
             ')',
@@ -339,6 +358,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_gentoo_legacy_ipv6(self):
         """Test setting public IPv6 for Gentoo legacy networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -352,6 +372,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             '# Automatically generated, do not edit',
             'modules=( "ifconfig" )',
             '',
+            '# Label public',
             'config_eth0=(',
             '    "2001:db8::42/96"',
             ')',
@@ -364,6 +385,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_gentoo_openrc_ipv4(self):
         """Test setting public IPv4 for Gentoo OpenRC networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -377,6 +399,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             '# Automatically generated, do not edit',
             'modules="ifconfig"',
             '',
+            '# Label public',
             'config_eth0="192.0.2.42 netmask 255.255.255.0"',
             'routes_eth0="default via 192.0.2.1"',
             'dns_servers_eth0="192.0.2.2"',
@@ -386,6 +409,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_gentoo_openrc_ipv6(self):
         """Test setting public IPv6 for Gentoo OpenRC networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -399,6 +423,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             '# Automatically generated, do not edit',
             'modules="ifconfig"',
             '',
+            '# Label public',
             'config_eth0="2001:db8::42/96"',
             'routes_eth0="default via 2001:db8::1"',
             'dns_servers_eth0="2001:db8::2"',
@@ -408,6 +433,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_suse_ipv4(self):
         """Test setting public IPv4 for SuSE networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv4': [('192.0.2.42', '255.255.255.0')],
             'gateway4': '192.0.2.1',
@@ -419,6 +445,8 @@ class TestInterfacesUpdates(agent_test.TestCase):
         generated = outfiles['ifcfg-eth0'].rstrip().split('\n')
         expected = [
             "# Automatically generated, do not edit",
+            "",
+            "# Label public",
             "BOOTPROTO='static'",
             "IPADDR='192.0.2.42'",
             "NETMASK='255.255.255.0'",
@@ -430,6 +458,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
     def test_suse_ipv6(self):
         """Test setting public IPv6 for SuSE networking"""
         interface = {
+            'label': 'public',
             'hwaddr': '00:11:22:33:44:55',
             'ipv6': [('2001:db8::42', 96)],
             'gateway6': '2001:db8::1',
@@ -441,6 +470,8 @@ class TestInterfacesUpdates(agent_test.TestCase):
         generated = outfiles['ifcfg-eth0'].rstrip().rstrip().split('\n')
         expected = [
             "# Automatically generated, do not edit",
+            "",
+            "# Label public",
             "BOOTPROTO='static'",
             "IPADDR='2001:db8::42'",
             "PREFIXLEN='96'",

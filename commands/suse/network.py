@@ -132,6 +132,8 @@ def _get_file_data(ifname, interface):
     Return data for (sub-)interfaces and routes
     """
 
+    label = interface['label']
+
     ip4s = interface['ip4s']
     ip6s = interface['ip6s']
 
@@ -140,7 +142,9 @@ def _get_file_data(ifname, interface):
 
     ifnum = None
 
-    iface_data = "# Automatically generated, do not edit\n"
+    iface_data = "# Automatically generated, do not edit\n\n"
+    if label:
+        iface_data += "# Label %s\n" % label
     iface_data += "BOOTPROTO='static'\n"
 
     for ip in ip4s:
