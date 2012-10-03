@@ -81,7 +81,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
         }
         outfiles = self._run_test('redhat', eth0=interface)
         self.assertTrue('ifcfg-eth0' in outfiles)
-        self.assertEqual(outfiles['ifcfg-eth0'], '\n'.join([
+
+        generated = outfiles['ifcfg-eth0'].rstrip().split('\n')
+        expected = [
             '# Automatically generated, do not edit',
             'DEVICE=eth0',
             'BOOTPROTO=static',
@@ -92,7 +94,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'GATEWAY=192.0.2.1',
             'DNS1=192.0.2.2',
             'ONBOOT=yes',
-            'NM_CONTROLLED=no']) + '\n')
+            'NM_CONTROLLED=no',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_redhat_ipv6(self):
         """Test setting public IPv6 for Red Hat networking"""
@@ -104,7 +108,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
         }
         outfiles = self._run_test('redhat', eth0=interface)
         self.assertTrue('ifcfg-eth0' in outfiles)
-        self.assertEqual(outfiles['ifcfg-eth0'], '\n'.join([
+
+        generated = outfiles['ifcfg-eth0'].rstrip().split('\n')
+        expected = [
             '# Automatically generated, do not edit',
             'DEVICE=eth0',
             'BOOTPROTO=static',
@@ -115,7 +121,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'IPV6_DEFAULTGW=2001:db8::1%eth0',
             'DNS1=2001:db8::2',
             'ONBOOT=yes',
-            'NM_CONTROLLED=no']) + '\n')
+            'NM_CONTROLLED=no',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_debian_ipv4(self):
         """Test setting public IPv4 for Debian networking"""
@@ -127,7 +135,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
         }
         outfiles = self._run_test('debian', eth0=interface)
         self.assertTrue('interfaces' in outfiles)
-        self.assertEqual(outfiles['interfaces'], '\n'.join([
+
+        generated = outfiles['interfaces'].rstrip().split('\n')
+        expected = [
             '# Used by ifup(8) and ifdown(8). See the interfaces(5) '
                 'manpage or',
             '# /usr/share/doc/ifupdown/examples for more information.',
@@ -140,7 +150,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
             '    address 192.0.2.42',
             '    netmask 255.255.255.0',
             '    gateway 192.0.2.1',
-            '    dns-nameservers 192.0.2.2']) + '\n')
+            '    dns-nameservers 192.0.2.2',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_debian_ipv6(self):
         """Test setting public IPv6 for Debian networking"""
@@ -152,7 +164,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
         }
         outfiles = self._run_test('debian', eth0=interface)
         self.assertTrue('interfaces' in outfiles)
-        self.assertEqual(outfiles['interfaces'], '\n'.join([
+
+        generated = outfiles['interfaces'].rstrip().split('\n')
+        expected = [
             '# Used by ifup(8) and ifdown(8). See the interfaces(5) '
                 'manpage or',
             '# /usr/share/doc/ifupdown/examples for more information.',
@@ -165,7 +179,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
             '    address 2001:db8::42',
             '    netmask 96',
             '    gateway 2001:db8::1',
-            '    dns-nameservers 2001:db8::2']) + '\n')
+            '    dns-nameservers 2001:db8::2',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_arch_legacy_ipv4(self):
         """Test setting public IPv4 for Arch legacy networking"""
@@ -185,11 +201,15 @@ class TestInterfacesUpdates(agent_test.TestCase):
         outfiles = self._run_test('arch', infiles, eth0=interface,
                                   version='legacy')
         self.assertTrue('/etc/rc.conf' in outfiles)
-        self.assertEqual(outfiles['/etc/rc.conf'], '\n'.join([
+
+        generated = outfiles['/etc/rc.conf'].rstrip().split('\n')
+        expected = [
             'eth0="eth0 192.0.2.42 netmask 255.255.255.0"',
             'INTERFACES=(eth0)',
             'gateway="default gw 192.0.2.1"',
-            'ROUTES=(gateway)']) + '\n')
+            'ROUTES=(gateway)',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_arch_legacy_ipv6(self):
         """Test setting public IPv6 for Arch legacy networking"""
@@ -209,11 +229,15 @@ class TestInterfacesUpdates(agent_test.TestCase):
         outfiles = self._run_test('arch', infiles, eth0=interface,
                                   version='legacy')
         self.assertTrue('/etc/rc.conf' in outfiles)
-        self.assertEqual(outfiles['/etc/rc.conf'], '\n'.join([
+
+        generated = outfiles['/etc/rc.conf'].rstrip().split('\n')
+        expected = [
             'eth0="eth0 add 2001:db8::42/96"',
             'INTERFACES=(eth0)',
             'gateway6="default gw 2001:db8::1"',
-            'ROUTES=(gateway6)']) + '\n')
+            'ROUTES=(gateway6)',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_arch_netcfg_ipv4(self):
         """Test setting public IPv4 for Arch netcfg networking"""
@@ -230,19 +254,27 @@ class TestInterfacesUpdates(agent_test.TestCase):
         }
         outfiles = self._run_test('arch', infiles, eth0=interface,
                                   version='netcfg')
+
         self.assertTrue('/etc/rc.conf' in outfiles)
-        self.assertEqual(outfiles['/etc/rc.conf'], '\n'.join([
+        generated = outfiles['/etc/rc.conf'].rstrip().split('\n')
+        expected = [
             'NETWORKS=(eth0)',
-            'DAEMONS=(foo !network @net-profiles bar)']) + '\n')
+            'DAEMONS=(foo !network @net-profiles bar)',
+        ]
+        self.assertSequenceEqual(generated, expected)
+
         self.assertTrue('/etc/network.d/eth0' in outfiles)
-        self.assertEqual(outfiles['/etc/network.d/eth0'], '\n'.join([
+        generated = outfiles['/etc/network.d/eth0'].rstrip().split('\n')
+        expected = [
             'CONNECTION="ethernet"',
             'INTERFACE=eth0',
             'IP="static"',
             'ADDR="192.0.2.42"',
             'NETMASK="255.255.255.0"',
             'GATEWAY="192.0.2.1"',
-            'DNS=(192.0.2.2)']) + '\n')
+            'DNS=(192.0.2.2)',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_arch_netcfg_ipv6(self):
         """Test setting public IPv6 for Arch netcfg networking"""
@@ -259,17 +291,25 @@ class TestInterfacesUpdates(agent_test.TestCase):
         }
         outfiles = self._run_test('arch', infiles, eth0=interface,
                                   version='netcfg')
+
         self.assertTrue('/etc/rc.conf' in outfiles)
-        self.assertEqual(outfiles['/etc/rc.conf'], '\n'.join([
+        generated = outfiles['/etc/rc.conf'].rstrip().split('\n')
+        expected = [
             'NETWORKS=(eth0)',
-            'DAEMONS=(foo !network @net-profiles bar)']) + '\n')
-        self.assertEqual(outfiles['/etc/network.d/eth0'], '\n'.join([
+            'DAEMONS=(foo !network @net-profiles bar)',
+        ]
+
+        self.assertTrue('/etc/network.d/eth0' in outfiles)
+        generated = outfiles['/etc/network.d/eth0'].rstrip().split('\n')
+        expected = [
             'CONNECTION="ethernet"',
             'INTERFACE=eth0',
             'IP6="static"',
             'ADDR6="2001:db8::42/96"',
             'GATEWAY6="2001:db8::1"',
-            'DNS=(2001:db8::2)']) + '\n')
+            'DNS=(2001:db8::2)',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_gentoo_legacy_ipv4(self):
         """Test setting public IPv4 for Gentoo legacy networking"""
@@ -280,8 +320,10 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'dns': ['192.0.2.2'],
         }
         outfiles = self._run_test('gentoo', eth0=interface, version='legacy')
+
         self.assertTrue('net' in outfiles)
-        self.assertEqual(outfiles['net'], '\n'.join([
+        generated = outfiles['net'].rstrip().split('\n')
+        expected = [
             '# Automatically generated, do not edit',
             'modules=( "ifconfig" )',
             '',
@@ -290,7 +332,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
             ')',
             'routes_eth0=(',
             '    "default via 192.0.2.1"',
-            ')']) + '\n')
+            ')',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_gentoo_legacy_ipv6(self):
         """Test setting public IPv6 for Gentoo legacy networking"""
@@ -301,8 +345,10 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'dns': ['2001:db8::2'],
         }
         outfiles = self._run_test('gentoo', eth0=interface, version='legacy')
+
         self.assertTrue('net' in outfiles)
-        self.assertEqual(outfiles['net'], '\n'.join([
+        generated = outfiles['net'].rstrip().split('\n')
+        expected = [
             '# Automatically generated, do not edit',
             'modules=( "ifconfig" )',
             '',
@@ -311,7 +357,9 @@ class TestInterfacesUpdates(agent_test.TestCase):
             ')',
             'routes_eth0=(',
             '    "default via 2001:db8::1"',
-            ')']) + '\n')
+            ')',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_gentoo_openrc_ipv4(self):
         """Test setting public IPv4 for Gentoo OpenRC networking"""
@@ -322,14 +370,18 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'dns': ['192.0.2.2'],
         }
         outfiles = self._run_test('gentoo', eth0=interface, version='openrc')
+
         self.assertTrue('net' in outfiles)
-        self.assertEqual(outfiles['net'], '\n'.join([
+        generated = outfiles['net'].rstrip().split('\n')
+        expected = [
             '# Automatically generated, do not edit',
             'modules="ifconfig"',
             '',
             'config_eth0="192.0.2.42 netmask 255.255.255.0"',
             'routes_eth0="default via 192.0.2.1"',
-            'dns_servers_eth0="192.0.2.2"']) + '\n')
+            'dns_servers_eth0="192.0.2.2"',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_gentoo_openrc_ipv6(self):
         """Test setting public IPv6 for Gentoo OpenRC networking"""
@@ -340,14 +392,18 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'dns': ['2001:db8::2'],
         }
         outfiles = self._run_test('gentoo', eth0=interface, version='openrc')
+
         self.assertTrue('net' in outfiles)
-        self.assertEqual(outfiles['net'], '\n'.join([
+        generated = outfiles['net'].rstrip().split('\n')
+        expected = [
             '# Automatically generated, do not edit',
             'modules="ifconfig"',
             '',
             'config_eth0="2001:db8::42/96"',
             'routes_eth0="default via 2001:db8::1"',
-            'dns_servers_eth0="2001:db8::2"']) + '\n')
+            'dns_servers_eth0="2001:db8::2"',
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_suse_ipv4(self):
         """Test setting public IPv4 for SuSE networking"""
@@ -358,14 +414,18 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'dns': ['192.0.2.2'],
         }
         outfiles = self._run_test('suse', eth0=interface)
+
         self.assertTrue('ifcfg-eth0' in outfiles)
-        self.assertEqual(outfiles['ifcfg-eth0'], '\n'.join([
+        generated = outfiles['ifcfg-eth0'].rstrip().split('\n')
+        expected = [
             "# Automatically generated, do not edit",
             "BOOTPROTO='static'",
             "IPADDR='192.0.2.42'",
             "NETMASK='255.255.255.0'",
             "STARTMODE='auto'",
-            "USERCONTROL='no'"]) + '\n')
+            "USERCONTROL='no'",
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_suse_ipv6(self):
         """Test setting public IPv6 for SuSE networking"""
@@ -376,14 +436,18 @@ class TestInterfacesUpdates(agent_test.TestCase):
             'dns': ['2001:db8::2'],
         }
         outfiles = self._run_test('suse', eth0=interface)
+
         self.assertTrue('ifcfg-eth0' in outfiles)
-        self.assertEqual(outfiles['ifcfg-eth0'], '\n'.join([
+        generated = outfiles['ifcfg-eth0'].rstrip().rstrip().split('\n')
+        expected = [
             "# Automatically generated, do not edit",
             "BOOTPROTO='static'",
             "IPADDR='2001:db8::42'",
             "PREFIXLEN='96'",
             "STARTMODE='auto'",
-            "USERCONTROL='no'"]) + '\n')
+            "USERCONTROL='no'",
+        ]
+        self.assertSequenceEqual(generated, expected)
 
 
 if __name__ == "__main__":

@@ -51,7 +51,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                                         "gateway":"10.177.96.1"}],
                              "mac":"40:40:a2:87:6e:26"}}
 
-        inputdata = '\n'.join([
+        input = [
             'hostname="oldhostname"',
             'check_quotas="NO"',
             'ipv6_enable="YES"',
@@ -64,9 +64,14 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'dhcpd_enable="YES"',
             'dhcpd_flags="-q"',
             'dhcpd_conf="/usr/local/etc/dhcpd.conf"',
-            ''])
+            ''
+        ]
 
-        expecteddata = '\n'.join([
+        filedata = network._create_rcconf_file(StringIO('\n'.join(input)),
+                                               interfaces, 'myhostname')
+
+        generated = filedata.rstrip().split('\n')
+        expected = [
             'check_quotas="NO"',
             'pf_enable="YES"',
             'pflog_enable="YES"',
@@ -80,12 +85,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                     '10.177.96.1"',
             'static_routes="lan0,lan1"',
             'defaultrouter="10.127.31.1"',
-            ''])
-
-        filedata = network._create_rcconf_file(StringIO(inputdata),
-                interfaces, 'myhostname')
-
-        self.assertEqual(filedata, expecteddata)
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_ipv4_2_aliases(self):
         """Test setting public IPv4 with an IP alias"""
@@ -112,7 +113,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                                         "gateway":"10.177.96.1"}],
                              "mac":"40:40:a2:87:6e:26"}}
 
-        inputdata = '\n'.join([
+        input = [
             'hostname="oldhostname"',
             'check_quotas="NO"',
             'ipv6_enable="YES"',
@@ -125,9 +126,14 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'dhcpd_enable="YES"',
             'dhcpd_flags="-q"',
             'dhcpd_conf="/usr/local/etc/dhcpd.conf"',
-            ''])
+            ''
+        ]
 
-        expecteddata = '\n'.join([
+        filedata = network._create_rcconf_file(StringIO('\n'.join(input)),
+                                               interfaces, 'myhostname')
+
+        generated = filedata.rstrip().split('\n')
+        expected = [
             'check_quotas="NO"',
             'pf_enable="YES"',
             'pflog_enable="YES"',
@@ -143,12 +149,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                     '10.177.96.1"',
             'static_routes="lan0,lan1"',
             'defaultrouter="10.127.31.1"',
-            ''])
-
-        filedata = network._create_rcconf_file(StringIO(inputdata),
-                interfaces, 'myhostname')
-
-        self.assertEqual(filedata, expecteddata)
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_ipv4and6_0_aliases(self):
         """Test setting public IPv4 for FreeBSD networking"""
@@ -173,7 +175,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                                         "gateway":"10.177.96.1"}],
                              "mac":"40:40:a2:87:6e:26"}}
 
-        inputdata = '\n'.join([
+        input = [
             'hostname="oldhostname"',
             'check_quotas="NO"',
             'ipv6_enable="YES"',
@@ -186,9 +188,14 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'dhcpd_enable="YES"',
             'dhcpd_flags="-q"',
             'dhcpd_conf="/usr/local/etc/dhcpd.conf"',
-            ''])
+            ''
+        ]
 
-        expecteddata = '\n'.join([
+        filedata = network._create_rcconf_file(StringIO('\n'.join(input)),
+                                               interfaces, 'myhostname')
+
+        generated = filedata.rstrip().split('\n')
+        expected = [
             'check_quotas="NO"',
             'pf_enable="YES"',
             'pflog_enable="YES"',
@@ -206,12 +213,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'ipv6_network_interfaces="xn0"',
             'defaultrouter="10.127.31.1"',
             'ipv6_defaultrouter="ffff::1%xn0"',
-            ''])
-
-        filedata = network._create_rcconf_file(StringIO(inputdata),
-                interfaces, 'myhostname')
-
-        self.assertEqual(filedata, expecteddata)
+        ]
+        self.assertSequenceEqual(generated, expected)
 
     def test_ipv4and6_2_aliases(self):
         """Test setting public IPv4 with an IP alias"""
@@ -244,7 +247,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
                                         "gateway":"10.177.96.1"}],
                              "mac":"40:40:a2:87:6e:26"}}
 
-        inputdata = '\n'.join([
+        input = [
             'hostname="oldhostname"',
             'check_quotas="NO"',
             'ipv6_enable="YES"',
@@ -257,9 +260,14 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'dhcpd_enable="YES"',
             'dhcpd_flags="-q"',
             'dhcpd_conf="/usr/local/etc/dhcpd.conf"',
-            ''])
+            ''
+        ]
 
-        expecteddata = '\n'.join([
+        filedata = network._create_rcconf_file(StringIO('\n'.join(input)),
+                                               interfaces, 'myhostname')
+
+        generated = filedata.rstrip().split('\n')
+        expected = [
             'check_quotas="NO"',
             'pf_enable="YES"',
             'pflog_enable="YES"',
@@ -281,12 +289,8 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'ipv6_network_interfaces="xn0"',
             'defaultrouter="10.127.31.1"',
             'ipv6_defaultrouter="ffff::1%xn0"',
-            ''])
-
-        filedata = network._create_rcconf_file(StringIO(inputdata),
-                interfaces, 'myhostname')
-
-        self.assertEqual(filedata, expecteddata)
+        ]
+        self.assertSequenceEqual(generated, expected)
 
 if __name__ == "__main__":
     agent_test.main()
