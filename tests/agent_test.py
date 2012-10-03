@@ -20,7 +20,7 @@
 Nova agent unit test module
 """
 
-import unittest
+import unittest2 as unittest
 import sys
 
 
