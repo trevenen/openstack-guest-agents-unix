@@ -183,6 +183,8 @@ def _get_file_data(interfaces):
     for ifname_prefix in ifnames:
         interface = interfaces[ifname_prefix]
 
+        label = interface['label']
+
         ip4s = interface['ip4s']
         ip6s = interface['ip6s']
 
@@ -200,6 +202,8 @@ def _get_file_data(interfaces):
                 ifname = ifname_prefix
 
             file_data += "\n"
+            if label:
+                file_data += "# Label %s\n" % label
             file_data += "auto %s\n" % ifname
 
             if ip4:

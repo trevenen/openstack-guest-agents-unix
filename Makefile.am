@@ -6,7 +6,7 @@ ACLOCAL_MFLAGS = -I m4
 SUBDIRS = lib src plugins commands tests
 
 EXTRA_DIST = install_libs.py install_modules.py nova-agent.py \
-			run_tests.py patch_binary.py scripts/agent-smith \
+			patch_binary.py scripts/agent-smith \
 			scripts/generic/nova-agent scripts/gentoo/nova-agent \
 			scripts/freebsd/nova-agent
 
@@ -30,7 +30,7 @@ BINTARNAME = ${BINTARDIR}.tar.gz
 FULLBINTARDIR = $(top_srcdir)/${BINTARDIR}
 
 check-local:
-	@${PYTHON_VER} run_tests.py
+	unit2 discover
 
 install-exec-local: install-modules install-libs patch-binary
 	rm -f ${DESTDIR}${datadir}/../nova-agent.py

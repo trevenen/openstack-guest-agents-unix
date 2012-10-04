@@ -401,6 +401,8 @@ def _get_file_data_netcfg(ifname, interface):
 
     ifaces = []
 
+    label = interface['label']
+
     ip4s = interface['ip4s']
     ip6s = interface['ip6s']
 
@@ -411,6 +413,8 @@ def _get_file_data_netcfg(ifname, interface):
 
     outfile = StringIO()
 
+    if label:
+        print >>outfile, "# Label %s" % label
     print >>outfile, 'CONNECTION="ethernet"'
     print >>outfile, 'INTERFACE=%s' % ifname
 
