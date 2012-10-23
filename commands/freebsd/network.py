@@ -69,8 +69,8 @@ def configure_network(hostname, interfaces):
 
     # Restart network
     logging.debug('executing /etc/rc.d/netif restart')
-    p = subprocess.Popen(["/etc/rc.d/netif", "restart"],
-            stdin=pipe, stdout=pipe, stderr=pipe, env={})
+    p = subprocess.Popen(["/bin/sh", "/etc/rc.d/netif", "restart"],
+            stdin=pipe, stdout=pipe, stderr=pipe)
     logging.debug('waiting on pid %d' % p.pid)
     status = os.waitpid(p.pid, 0)[1]
     logging.debug('status = %d' % status)
@@ -89,6 +89,17 @@ def configure_network(hostname, interfaces):
 
         if status != 0:
             return (500, "Couldn't restart IPv6 networking: %d" % status)
+
+    # Restart routing
+    logging.debug('executing /etc/rc.d/routing restart')
+    p = subprocess.Popen(["/bin/sh", "/etc/rc.d/routing", "restart"],
+            stdin=pipe, stdout=pipe, stderr=pipe)
+    logging.debug('waiting on pid %d' % p.pid)
+    status = os.waitpid(p.pid, 0)[1]
+    logging.debug('status = %d' % status)
+
+    if status != 0:
+        return (500, "Couldn't restart network routing: %d" % status)
 
     return (0, "")
 
