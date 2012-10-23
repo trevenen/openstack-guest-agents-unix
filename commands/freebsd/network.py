@@ -189,7 +189,7 @@ def _create_rcconf_file(infile, interfaces, hostname):
             names.append(name)
             print >> outfile, 'route_%s="%s"' % (name, line)
 
-        print >> outfile, 'static_routes="%s"' % ','.join(names)
+        print >> outfile, 'static_routes="%s"' % ' '.join(names)
 
     if ipv6_interfaces:
         print >> outfile, 'ipv6_enable="YES"'
