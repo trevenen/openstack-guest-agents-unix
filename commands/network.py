@@ -186,7 +186,8 @@ class NetworkCommands(commands.CommandBase):
 
             # 'label' used to be the method to determine which interface
             # this configuration applies to, but 'mac' is safer to use.
-            # 'label' is being phased out now.
+            # 'label' is now only used for printing a comment in the
+            # generated configuration to easier differentiate interfaces.
             if mac not in by_macaddr:
                 raise RuntimeError('Unknown interface MAC %s' % mac)
 
