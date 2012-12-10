@@ -42,6 +42,9 @@ RCCONF_FILE = "/etc/rc.conf"
 def configure_network(hostname, interfaces):
     update_files = {}
 
+    # Unset LD_LIBRARY_PATH
+    del os.environ['LD_LIBRARY_PATH']
+
     # Generate new /etc/rc.conf
     data = _get_file_data(interfaces, hostname)
     update_files[RCCONF_FILE] = data
@@ -70,7 +73,7 @@ def configure_network(hostname, interfaces):
     # Restart network
     logging.debug('executing /etc/rc.d/netif restart')
     p = subprocess.Popen(["/bin/sh", "/etc/rc.d/netif", "restart"],
-            stdin=pipe, stdout=pipe, stderr=pipe)
+            stdin=pipe, stdout=pipe, stderr=pipe, env=os.environ.copy())
     logging.debug('waiting on pid %d' % p.pid)
     status = os.waitpid(p.pid, 0)[1]
     logging.debug('status = %d' % status)
@@ -93,7 +96,7 @@ def configure_network(hostname, interfaces):
     # Restart routing
     logging.debug('executing /etc/rc.d/routing restart')
     p = subprocess.Popen(["/bin/sh", "/etc/rc.d/routing", "restart"],
-            stdin=pipe, stdout=pipe, stderr=pipe)
+            stdin=pipe, stdout=pipe, stderr=pipe, env=os.environ.copy())
     logging.debug('waiting on pid %d' % p.pid)
     status = os.waitpid(p.pid, 0)[1]
     logging.debug('status = %d' % status)
