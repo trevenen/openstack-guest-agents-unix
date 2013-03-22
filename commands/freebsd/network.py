@@ -143,7 +143,7 @@ def _create_rcconf_file(infile, interfaces, hostname):
     for ifname_prefix in ifnames:
         interface = interfaces[ifname_prefix]
 
-        #label = interface['label']
+        label = interface.get('label')
 
         ip4s = interface['ip4s']
         ip6s = interface['ip6s']
@@ -158,8 +158,8 @@ def _create_rcconf_file(infile, interfaces, hostname):
                 ifname = "%s_alias%d" % (ifname_prefix, ifname_suffix_num - 1)
             else:
                 ifname = ifname_prefix
-                #if label:
-                #    print >>outfile, '# Label %s' % label
+                if label:
+                    print >>outfile, '# Label %s' % label
 
             if ip4:
                 if ifname_suffix_num:
