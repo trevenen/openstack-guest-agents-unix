@@ -39,7 +39,7 @@ if test "$PYTHON_CFLAGS" = "" -a "$PYTHON_LIB" = ""; then
     for python in "python2.7" "python2.6" "python2.5" "python2.4" ; do
         for dir in $prefix "/usr/local" "/usr"; do
             if test -f ${dir}/include/${python}/Python.h ; then
-                if test -f ${dir}/lib/lib${python}.so ; then
+                if test -f ${dir}/lib/lib${python}.so -o -f ${dir}/lib64/lib${python}.so ; then
                     # We're done.  Found header and library
                     PYTHON_VER=${python}
                     PYTHON_CFLAGS="-I${dir}/include/${python}"
