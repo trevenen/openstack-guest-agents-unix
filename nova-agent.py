@@ -44,6 +44,6 @@ agentlib.register(xs, parser)
 
 # Reset the networking on every start, useful for debugging or machines without
 # permanent root filesystems (so networking is setup on every boot)
-if sys.argv[1] == "resetnetwork":
+if len(sys.argv) >= 2 and sys.argv[1] == "resetnetwork":
     net = c.command_instance('resetnetwork')
     net.resetnetwork_cmd(None)
