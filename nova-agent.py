@@ -16,6 +16,8 @@
 #     under the License.
 #
 
+import sys
+
 # Needed to register the exchange/parser plugin combiniation with the
 # main daemon
 import agentlib
@@ -39,3 +41,9 @@ xs = plugins.XSComm()
 
 # Register an exchange/parser combination with the main daemon
 agentlib.register(xs, parser)
+
+# Reset the networking on every start, useful for debugging or machines without
+# permanent root filesystems (so networking is setup on every boot)
+if len(sys.argv) >= 2 and sys.argv[1] == "resetnetwork":
+    net = c.command_instance('resetnetwork')
+    net.resetnetwork_cmd(None)
