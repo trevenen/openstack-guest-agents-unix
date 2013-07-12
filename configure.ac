@@ -123,6 +123,7 @@ AC_CONFIG_FILES([Makefile
                  scripts/generic/nova-agent
                  scripts/gentoo/nova-agent
                  scripts/freebsd/nova-agent
+                 scripts/systemd/nova-agent.service
                  ])
 
 AC_OUTPUT

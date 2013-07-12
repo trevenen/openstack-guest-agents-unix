@@ -20,6 +20,7 @@ nodist_noinst_DATA = agentlib.so \
 
 noinst_DATA = scripts/generic/nova-agent.in \
 		scripts/gentoo/nova-agent.in \
+		scripts/systemd/nova-agent.service.in \
 		scripts/freebsd/nova-agent.in
 
 agentlib.so:
@@ -78,9 +79,12 @@ bintar: all
 	@mkdir -m 0700 ${FULLBINTARDIR}/${etcdir}/generic
 	@mkdir -m 0700 ${FULLBINTARDIR}/${etcdir}/gentoo
 	@mkdir -m 0700 ${FULLBINTARDIR}/${etcdir}/freebsd
+	@mkdir -m 0700 ${FULLBINTARDIR}/${etcdir}/systemd
+	@mkdir -m 0700 ${FULLBINTARDIR}/${etcdir}/systemd/system
 	@install -m 700 $(top_srcdir)/scripts/generic/nova-agent ${FULLBINTARDIR}/${etcdir}/generic/nova-agent
 	@install -m 700 $(top_srcdir)/scripts/gentoo/nova-agent ${FULLBINTARDIR}/${etcdir}/gentoo/nova-agent
 	@install -m 700 $(top_srcdir)/scripts/freebsd/nova-agent ${FULLBINTARDIR}/${etcdir}/freebsd/nova-agent
+	@install -Dm644 $(top_srcdir)/scripts/systemd/nova-agent.service ${FULLBINTARDIR}/${etcdir}/systemd/system/nova-agent.service
 	@chown -R 0:0 ${FULLBINTARDIR}
 # agent-smith requires that we don't have a subdir in the tar
 # once agent-smith is dead, we can use this
