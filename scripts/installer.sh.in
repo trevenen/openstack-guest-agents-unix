@@ -50,12 +50,16 @@ add_to_startup() {
 
         /sbin/rc-update add nova-agent default > /dev/null 2>&1
     elif [ -f /etc/arch-release ] ; then
-        # Arch is a hybrid BSD and SysV style init system. We just need to
-        # install a SysV style script into /etc/rc.d, but then update
-        # /etc/rc.conf to enable it
-        grep -q '^DAEMONS=.*nova-agent' /etc/rc.conf
-        if [ $? -ne 0 ] ; then
-            sed -i.backup 's/^DAEMONS=(\(.*\))/DAEMONS=(nova-agent \1)/' /etc/rc.conf
+        if [[ "$(basename $(readlink /sbin/init))" == systemd ]]; then
+            /usr/bin/systemctl enable -f nova-agent.service
+        else
+            # Arch is a hybrid BSD and SysV style init system. We just need to
+            # install a SysV style script into /etc/rc.d, but then update
+            # /etc/rc.conf to enable it
+            grep -q '^DAEMONS=.*nova-agent' /etc/rc.conf
+            if [ $? -ne 0 ] ; then
+                sed -i.backup 's/^DAEMONS=(\(.*\))/DAEMONS=(nova-agent \1)/' /etc/rc.conf
+            fi
         fi
     elif [ `uname -s` == 'FreeBSD' ] ; then
         # FreeBSD needs nova_agent_enable="YES" added to rc.conf
@@ -104,9 +108,13 @@ elif [ -d /etc/init.d ]; then
     rm -f /etc/init.d/nova-agent
     ln -s ${dataversdir}/etc/generic/nova-agent /etc/init.d/nova-agent
 elif [ -f /etc/arch-release ] ; then
-    # Arch Linux
-    rm -f /etc/rc.d/nova-agent
-    ln -s ${dataversdir}/etc/generic/nova-agent /etc/rc.d/nova-agent
+    if [[ "$(basename $(readlink /sbin/init))" == systemd ]]; then
+        ln -sf ${dataversdir}/etc/systemd/nova-agent.service /etc/systemd/system/nova-agent.service
+    else
+        # Arch Linux
+        rm -f /etc/rc.d/nova-agent
+        ln -s ${dataversdir}/etc/generic/nova-agent /etc/rc.d/nova-agent
+    fi
 elif [ -d /etc/rc.d ]; then
     # FreeBSD
     rm -f /etc/rc.d/nova-agent

@@ -22,13 +22,17 @@ add_to_startup() {
     elif [ -f /sbin/rc-update ] ; then
         /sbin/rc-update add nova-agent default > /dev/null 2>&1
     elif [ -f /etc/arch-release ] ; then
-        # Arch is a hybrid BSD and SysV style init system. We just need to
-        # install a SysV style script into /etc/rc.d, but then update
-        # /etc/rc.conf to enable it 
-        grep -q '^DAEMONS=.*nova-agent' /etc/rc.conf 
-        if [ $? -ne 0 ] ; then
-            sed -i.backup 's/^DAEMONS=(\(.*\))/DAEMONS=(nova-agent \1)/' /etc/rc.conf       
-        fi  
+        if [[ "$(basename $(readlink /sbin/init))" == systemd ]]; then
+            /usr/bin/systemctl enable nova-agent.service > /dev/null 2>&1
+        else
+            # Arch is a hybrid BSD and SysV style init system. We just need to
+            # install a SysV style script into /etc/rc.d, but then update
+            # /etc/rc.conf to enable it
+            grep -q '^DAEMONS=.*nova-agent' /etc/rc.conf
+            if [ $? -ne 0 ] ; then
+                sed -i.backup 's/^DAEMONS=(\(.*\))/DAEMONS=(nova-agent \1)/' /etc/rc.conf
+            fi
+        fi
     elif [ `uname -s` == 'FreeBSD' ] ; then 
         # FreeBSD needs nova_agent_enable="YES" added to rc.conf
         egrep -q '^nova-agent_enable=.*YES' /etc/rc.conf
@@ -59,6 +63,7 @@ chkconfig agent-smith --del > /dev/null 2>&1
 chkconfig agent-smith.init --del > /dev/null 2>&1
 rm -f /etc/init.d/agent-smith
 rm -f /etc/init.d/agent-smith.init
+rm -f /etc/systemd/system/nova-agent.service
 
 
 # This forks into the background and looks for the old agent script
@@ -96,9 +101,16 @@ if [ -d /etc/init.d ]; then
 
     ln -s ${init_script} /etc/init.d/nova-agent
 elif [ -f /etc/arch-release ] ; then
-    rm -f /etc/rc.d/nova-agent
-    init_script=`find /usr/share/nova-agent -name nova-agent.init | head -1`
-    ln -s ${init_script} /etc/rc.d/nova-agent
+    if [[ "$(basename $(readlink /sbin/init))" == systemd ]]; then
+        rm -f /etc/systemd/system/nova-agent.service
+        rm -f /etc/rc.d/nova-agent
+        init_script=`find /usr/share/nova-agent -name nova-agent.service | head -1`
+        ln -s ${init_script} /etc/systemd/system/nova-agent.service
+    else
+        rm -f /etc/rc.d/nova-agent
+        init_script=`find /usr/share/nova-agent -name nova-agent.init | head -1`
+        ln -s ${init_script} /etc/rc.d/nova-agent
+    fi
 elif [ -d /etc/rc.d ]; then
     # FreeBSD
     rm -f /etc/rc.d/nova-agent

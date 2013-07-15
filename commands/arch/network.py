@@ -58,6 +58,7 @@ import commands.network
 
 CONF_FILE = "/etc/rc.conf"
 NETWORK_DIR = "/etc/network.d"
+NETCTL_DIR = "/etc/netctl/"
 
 
 def _execute(command):
@@ -79,52 +80,61 @@ def _execute(command):
 
 def configure_network(hostname, interfaces):
     update_files = {}
+    init=""
 
     # We need to figure out what style of network configuration is
     # currently being used by looking at /etc/rc.conf and then look
     # to see what style of network configuration we want to use by
     # looking to see if the netcfg package is installed
-
-    if os.path.exists(CONF_FILE):
-        update_files[CONF_FILE] = open(CONF_FILE).read()
-
-    infile = StringIO(update_files.get(CONF_FILE, ''))
-
-    cur_netcfg = True	# Currently using netcfg
-    lines, variables = _parse_config(infile)
-    lineno = variables.get('DAEMONS')
-    if lineno is not None:
-        daemons = _parse_variable(lines[lineno])
-        if 'network' in daemons:
-            # Config uses legacy style networking
-            cur_netcfg = False
-
-    status = _execute(['/usr/bin/pacman', '-Q', 'netcfg'])
-    use_netcfg = (status == 0)
-    logging.info('using %s style configuration' %
-                 (use_netcfg and 'netcfg' or 'legacy'))
-
-    if use_netcfg:
-        remove_files, netnames = process_interface_files_netcfg(
-                update_files, interfaces)
+    if os.path.basename(os.path.realpath('/sbin/init')) == 'systemd':
+        cur_netctl = True
+        status = _execute(['/usr/bin/pacman', '-Q', 'netctl'])
+        use_netctl = (status == 0)
+        remove_files, netnames = process_interface_files_netctl(update_files, interfaces)
+        get_hostname_file_systemd(hostname)
     else:
-        process_interface_files_legacy(update_files, interfaces)
-        remove_files = set()
+        cur_netctl = False
+        use_netctl = False
+        if os.path.exists(CONF_FILE):
+            update_files[CONF_FILE] = open(CONF_FILE).read()
 
-        # Generate new /etc/resolv.conf file
-        filepath, data = commands.network.get_resolv_conf(interfaces)
-        if data:
-            update_files[filepath] = data
+        infile = StringIO(update_files.get(CONF_FILE, ''))
 
-    # Update config file with new hostname
-    infile = StringIO(update_files.get(CONF_FILE, ''))
+        cur_netcfg = True    # Currently using netcfg
+        lines, variables = _parse_config(infile)
+        lineno = variables.get('DAEMONS')
+        if lineno is not None:
+            daemons = _parse_variable(lines[lineno])
+            if 'network' in daemons:
+                # Config uses legacy style networking
+                cur_netcfg = False
 
-    data = get_hostname_file(infile, hostname)
-    update_files[CONF_FILE] = data
+        status = _execute(['/usr/bin/pacman', '-Q', 'netcfg'])
+        use_netcfg = (status == 0)
+        logging.info('using %s style configuration' %
+                     (use_netcfg and 'netcfg' or 'legacy'))
 
-    # Generate new /etc/hosts file
-    filepath, data = commands.network.get_etc_hosts(interfaces, hostname)
-    update_files[filepath] = data
+        if use_netcfg:
+            remove_files, netnames = process_interface_files_netcfg(
+                    update_files, interfaces)
+        else:
+            process_interface_files_legacy(update_files, interfaces)
+            remove_files = set()
+
+            # Generate new /etc/resolv.conf file
+            filepath, data = commands.network.get_resolv_conf(interfaces)
+            if data:
+                update_files[filepath] = data
+
+        # Update config file with new hostname
+        infile = StringIO(update_files.get(CONF_FILE, ''))
+
+        data = get_hostname_file(infile, hostname)
+        update_files[CONF_FILE] = data
+
+        # Generate new /etc/hosts file
+        filepath, data = commands.network.get_etc_hosts(interfaces, hostname)
+        update_files[filepath] = data
 
     # Set hostname
     try:
@@ -140,7 +150,22 @@ def configure_network(hostname, interfaces):
 
     # Down network
     logging.info('configuring interfaces down')
-    if cur_netcfg:
+    if cur_netctl:
+        for netname in netnames:
+            if not interfaces[netname]['up']:
+                # Don't try to down an interface that isn't already up
+                logging.info('  %s, skipped (already down)' %
+                             netname)
+                continue
+
+            status = _execute(['/usr/bin/netctl', 'stop', ''.join(['ethernet-', netname])])
+            if status != 0:
+                logging.info('  %s, failed (status %d)' % (netname, status))
+                # Treat down failures as soft failures
+            else:
+                logging.info('  %s, success' % netname)
+
+    elif cur_netcfg:
         for netname in netnames:
             if not interfaces[netname]['up']:
                 # Don't try to down an interface that isn't already up
@@ -164,7 +189,26 @@ def configure_network(hostname, interfaces):
 
     # Up network
     logging.info('configuring interfaces up')
-    if use_netcfg:
+    if use_netctl:
+        for netname in netnames:
+            status = _execute(['/usr/bin/netctl', 'restart', netname])
+            status = _execute(['/usr/bin/netctl', 'reenable', netname])
+            if status != 0:
+                logging.info('  %s, failed (status %d), trying again' %
+                             (netname, status))
+
+                status = _execute(['/usr/bin/netctl', 'restart',  netname])
+                status = _execute(['/usr/bin/netctl', 'reenable',  netname])
+                if status != 0:
+                    logging.info('  %s, failed (status %d)' %
+                                 (netname, status))
+                    errors.add(netname)
+                else:
+                    logging.info('  %s, success' % netname)
+            else:
+                logging.info('  %s, success' % netname)
+
+    elif use_netcfg:
         for netname in netnames:
             status = _execute(['/usr/bin/netcfg', '-u', netname])
             if status != 0:
@@ -200,12 +244,14 @@ def configure_network(hostname, interfaces):
     return (0, "")
 
 
+def get_hostname_file_systemd(hostname):
+    _execute(['/usr/bin/hostnamectl', 'set-hostname', hostname])
+
 def get_hostname_file(infile, hostname):
     """
     Update hostname on system
     """
     outfile = StringIO()
-
     found = False
     for line in infile:
         line = line.strip()
@@ -393,6 +439,55 @@ def _update_rc_conf_legacy(infile, interfaces):
     outfile.seek(0)
     return outfile.read()
 
+def _get_file_data_netctl(ifname, interface):
+    ifaces = []
+
+    ifaces = []
+
+    label = interface['label']
+
+    ip4s = interface['ip4s']
+    ip6s = interface['ip6s']
+
+    gateway4 = interface['gateway4']
+    gateway6 = interface['gateway6']
+
+    dns = interface['dns']
+
+    outfile = StringIO()
+
+    if label:
+        print >>outfile, "# Label %s" % label
+    print >>outfile, 'Connection=ethernet'
+    print >>outfile, 'Interface=%s' % ifname
+
+    if ip4s:
+        ip4 = ip4s.pop(0)
+        print >>outfile, 'IP=static'
+        print >>outfile, 'Address=(\'%(address)s/%(netmask)s\')' % ip4
+
+        if gateway4:
+            print >>outfile, 'Gateway=%s' % gateway4
+
+    if ip6s:
+        ip6 = ip6s.pop(0)
+        print >>outfile, 'IP6=static'
+        print >>outfile, 'Address6=(\'%(address)s/%(prefixlen)s\')' % ip6
+
+        if gateway6:
+            print >>outfile, 'Gateway6=%s' % gateway6
+
+    routes = ['%(network)s/%(netmask)s via %(gateway)s' % route
+              for route in interface['routes']]
+
+    if routes:
+        print >>outfile, 'Routes=(\'%s\')' % '\' \''.join(routes)
+
+    if dns:
+        print >>outfile, 'DNS=(\'%s\')' % '\' \''.join(dns)
+
+    outfile.seek(0)
+    return outfile.read()
 
 def _get_file_data_netcfg(ifname, interface):
     """
@@ -519,7 +614,20 @@ def _update_rc_conf_netcfg(infile, netnames):
 
 
 def get_interface_files(infiles, interfaces, version):
-    if version == 'netcfg':
+    if version == 'netctl':
+        update_files = {}
+        netnames = []
+        for ifname, interface in interfaces.iteritems():
+            data = _get_file_data_netctl(ifname, interface)
+
+            filepath = os.path.join(NETCTL_DIR, ifname)
+            update_files[filepath] = data
+
+            netnames.append(ifname)
+            status = _execute(['/usr/bin/netctl', 'restart', ifname])
+            status = _execute(['/usr/bin/netctl', 'reenable', ifname])
+
+    if version == 'netcfg' and version != 'netctl':
         update_files = {}
         netnames = []
         for ifname, interface in interfaces.iteritems():
@@ -549,6 +657,28 @@ def process_interface_files_legacy(update_files, interfaces):
     update_files[CONF_FILE] = data
 
 
+def process_interface_files_netctl(update_files, interfaces):
+    """Generate changeset for interface configuration"""
+
+    # Enumerate all of the existing network files
+    remove_files = set()
+    for filename in os.listdir(NETCTL_DIR):
+        filepath = os.path.join(NETCTL_DIR, filename)
+        if not filename.endswith('~') and not os.path.isdir(filepath):
+            remove_files.add(filepath)
+
+    netnames = []
+    for ifname, interface in interfaces.iteritems():
+        data = _get_file_data_netctl(ifname, interface)
+
+        filepath = os.path.join(NETCTL_DIR, ifname)
+        update_files[filepath] = data
+        if filepath in remove_files:
+            remove_files.remove(filepath)
+
+        netnames.append(ifname)
+
+    return remove_files, netnames
 def process_interface_files_netcfg(update_files, interfaces):
     """Generate changeset for interface configuration"""
 
