@@ -18,6 +18,7 @@
  */
 
 #include "libagent_int.h"
+#include <sys/stat.h>
 
 
 static PyObject *logging = NULL;
@@ -68,7 +69,8 @@ static int basic_config(char *filename, char *level)
      * "-" means stdout, so don't set filename in the dictionary
      * in this case
      */
-    if (filename && strcmp(filename, "-"))
+    int haveRealFile = filename && strcmp(filename, "-");
+    if (haveRealFile)
     {
         PyObject *value = PyString_FromString(filename);
         if (!value)
@@ -115,12 +117,12 @@ static int basic_config(char *filename, char *level)
     PyDict_SetItemString(kwargs, "format", value);
     Py_DECREF(value);
 
-    PyObject *callable = PyObject_GetAttrString(logging, "basicConfig");
-    if (!callable)
+    PyObject *logging_basicConfig = PyObject_GetAttrString(logging, "basicConfig");
+    if (!logging_basicConfig)
         goto err_callable;
 
-    PyObject *ret = PyObject_Call(callable, args, kwargs);
-    Py_DECREF(callable);
+    PyObject *ret = PyObject_Call(logging_basicConfig, args, kwargs);
+    Py_DECREF(logging_basicConfig);
     Py_DECREF(args);
     Py_DECREF(kwargs);
 
@@ -130,6 +132,10 @@ static int basic_config(char *filename, char *level)
         retcode = 0;
         Py_DECREF(ret);
     }
+
+    // If we just created the file, make sure it's not world readable
+    if (haveRealFile)
+        chmod(filename, S_IRUSR|S_IWUSR);
 
     return retcode;
 
