@@ -231,10 +231,10 @@ def _get_file_data(interfaces):
             ifname_suffix_num += 1
 
         for route in interface['routes']:
-            file_data += "up route add -net %(network)s " \
-                         "netmask %(netmask)s gw %(gateway)s\n" % route
-            file_data += "down route del -net %(network)s " \
-                         "netmask %(netmask)s gw %(gateway)s\n" % route
+            file_data += "    post-up route add -net %(network)s " \
+                         "netmask %(netmask)s gw %(gateway)s || true\n" % route
+            file_data += "    pre-down route del -net %(network)s " \
+                         "netmask %(netmask)s gw %(gateway)s || true\n" % route
 
     return file_data
 
