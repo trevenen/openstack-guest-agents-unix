@@ -1,3 +1,6 @@
+*.swo
+*.swp
+*.un~
 *.suo
 bin
 obj
