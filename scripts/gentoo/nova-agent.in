@@ -34,13 +34,27 @@ NOVA_PYTHON_PATH="$(python --version |& tr "[:upper:]" "[:lower:]" | tr -d " ")"
 NOVA_PYTHON_PATH="${reallibdir}/${NOVA_PYTHON_PATH%.*}"
 PYTHONPATH="$(python -c 'import sys; print ":".join(sys.path)'):${NOVA_PYTHON_PATH}:${NOVA_PYTHON_PATH}/site-packages"
 
+depend() {
+  before net
+  after xe-daemon
+}
+
 start() {
     ebegin "Starting nova-agent"
     start-stop-daemon --start --exec ${nova_agent} \
         -e "PYTHONPATH=${PYTHONPATH}" \
         --pidfile ${pidfile} \
         -- -q -p ${pidfile} -o ${logfile} -l ${loglevel} ${agent_config} -S
-    eend $?
+    RET=$?
+
+    if [ "x${UUID}" != "x$(/usr/bin/xenstore read name)" ]; then
+        /usr/bin/xenstore write data/host/system-init '{"name":"resetnetwork","value":""}'
+        /usr/bin/xenstore watch -n 1 data/guest/system-init >/dev/null
+        [ "$(/usr/bin/xenstore read data/guest/system-init | wc -l)" -gt "0" ] || eend 1
+        echo "UUID=\"$(/usr/bin/xenstore read name)\"" >> /etc/conf.d/nova-agent
+    fi
+
+    eend $RET
 }
 
 stop() {
