@@ -87,7 +87,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
                     '10.177.96.1"',
-            'static_routes="lan0,lan1"',
+            'static_routes="lan0 lan1"',
             'defaultrouter="10.127.31.1"',
         ]
         self.assertSequenceEqual(generated, expected)
@@ -155,7 +155,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
                     '10.177.96.1"',
-            'static_routes="lan0,lan1"',
+            'static_routes="lan0 lan1"',
             'defaultrouter="10.127.31.1"',
         ]
         self.assertSequenceEqual(generated, expected)
@@ -220,7 +220,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
                     '10.177.96.1"',
-            'static_routes="lan0,lan1"',
+            'static_routes="lan0 lan1"',
             'ipv6_enable="YES"',
             'ipv6_network_interfaces="xn0"',
             'defaultrouter="10.127.31.1"',
@@ -300,7 +300,7 @@ class TestFreeBSDRCConf(agent_test.TestCase):
             'route_lan0="-net 10.176.0.0 -netmask 255.248.0.0 10.177.96.1"',
             'route_lan1="-net 10.191.192.0 -netmask 255.255.192.0 ' \
                     '10.177.96.1"',
-            'static_routes="lan0,lan1"',
+            'static_routes="lan0 lan1"',
             'ipv6_enable="YES"',
             'ipv6_network_interfaces="xn0"',
             'defaultrouter="10.127.31.1"',
