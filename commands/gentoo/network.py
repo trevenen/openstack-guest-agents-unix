@@ -130,7 +130,7 @@ def get_hostname_file(hostname):
     """
 
     lines = ["# Set to the hostname of this machine"]
-    lines.extend(_header())
+    lines.append(_header())
     lines.append("hostname=\"${0}\"".format(hostname))
 
     return "\n".join(lines)
@@ -156,7 +156,7 @@ def _confd_net_file(interfaces):
     ifaces = set()
 
     lines = []
-    lines.extend(_header())
+    lines.append(_header())
     lines.append("")
     lines.append('modules="ifconfig"')
     lines.append("")
@@ -205,7 +205,7 @@ def _confd_net_file_legacy(interfaces):
     ifaces = set()
 
     lines = []
-    lines.extend(_header())
+    lines.append(_header())
     lines.append("")
     lines.append('modules=( "ifconfig" )')
     lines.append("")
