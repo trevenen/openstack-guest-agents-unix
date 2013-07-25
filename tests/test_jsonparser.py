@@ -24,9 +24,10 @@ import agent_test
 import agentlib
 import commands
 import plugins.jsonparser
+import logging
+
 
 if __name__ == "__main__":
-    import logging
     logging.basicConfig(level=logging.CRITICAL)
 
 
@@ -35,6 +36,7 @@ class TestJsonParser(agent_test.TestCase):
     def setUp(self):
         super(TestJsonParser, self).setUp()
         self.jsonparser = plugins.jsonparser.JsonParser(self.commands)
+        logging.disable(logging.CRITICAL)
 
     def test_1_no_data_in_req(self):
         """Test jsonparser 'data' key missing"""
