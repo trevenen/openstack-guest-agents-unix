@@ -236,7 +236,7 @@ def _confd_net_file_legacy(interfaces):
 
         dns_list = interface['dns']
         if dns_list:
-            lines.append("dns_servers_%s=(")
+            lines.append("dns_servers_{0}=(".format(name))
             lines.extend([' "{0}"'.format(dns) for dns in dns_list])
             lines.append(")")
             lines.append("")
