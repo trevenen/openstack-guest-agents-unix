@@ -88,8 +88,8 @@ class TestHostNameUpdates(agent_test.TestCase):
     def test_gentoo(self):
         """Test updating hostname in Gentoo /etc/conf.d/hostname"""
         data = self._run_test('gentoo', 'example')
-        regex_hostname = re.compile('.*HOSTNAME="example"\n$', re.MULTILINE)
-        self.assertRegex(data, regex_hostname)
+        regex_hostname = re.compile('.*HOSTNAME="example"$', re.MULTILINE)
+        self.assertRegexpMatches(data, regex_hostname)
 
     def test_suse(self):
         """Test updating hostname in SuSE /etc/HOSTNAME"""

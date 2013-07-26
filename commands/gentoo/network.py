@@ -131,7 +131,7 @@ def get_hostname_file(hostname):
 
     lines = ["# Set to the hostname of this machine"]
     lines.append(_header())
-    lines.append("HOSTNAME=\"${0}\"".format(hostname))
+    lines.append("HOSTNAME=\"{0}\"".format(hostname))
 
     return "\n".join(lines)
 
