@@ -20,7 +20,7 @@
 resetnetwork hostname tester
 """
 
-import os
+import re
 from cStringIO import StringIO
 
 import agent_test
@@ -88,9 +88,8 @@ class TestHostNameUpdates(agent_test.TestCase):
     def test_gentoo(self):
         """Test updating hostname in Gentoo /etc/conf.d/hostname"""
         data = self._run_test('gentoo', 'example')
-        self.assertEqual(data,
-            '# Automatically generated, do not edit\n' +
-            'HOSTNAME="example"\n')
+        regex_hostname = re.compile('.*HOSTNAME="example"$', re.MULTILINE)
+        self.assertRegexpMatches(data, regex_hostname)
 
     def test_suse(self):
         """Test updating hostname in SuSE /etc/HOSTNAME"""

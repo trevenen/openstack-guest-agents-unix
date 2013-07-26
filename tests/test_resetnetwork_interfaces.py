@@ -20,8 +20,7 @@
 resetnetwork interfaces tester
 """
 
-import os
-from cStringIO import StringIO
+import re
 
 import agent_test
 import commands.redhat.network
@@ -43,6 +42,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             for ip, netmask in options.get('ipv4', []):
                 ip4s.append({'address': ip,
                              'netmask': netmask})
+
             interface['ip4s'] = ip4s
 
             interface['gateway4'] = options.get('gateway4')
@@ -51,6 +51,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
             for ip, netmask in options.get('ipv6', []):
                 ip6s.append({'address': ip,
                              'prefixlen': netmask})
+
             interface['ip6s'] = ip6s
 
             interface['gateway6'] = options.get('gateway6')
@@ -147,7 +148,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
         generated = outfiles['interfaces'].rstrip().split('\n')
         expected = [
             '# Used by ifup(8) and ifdown(8). See the interfaces(5) '
-                'manpage or',
+            'manpage or',
             '# /usr/share/doc/ifupdown/examples for more information.',
             '# The loopback network interface',
             'auto lo',
@@ -178,7 +179,7 @@ class TestInterfacesUpdates(agent_test.TestCase):
         generated = outfiles['interfaces'].rstrip().split('\n')
         expected = [
             '# Used by ifup(8) and ifdown(8). See the interfaces(5) '
-                'manpage or',
+            'manpage or',
             '# /usr/share/doc/ifupdown/examples for more information.',
             '# The loopback network interface',
             'auto lo',
@@ -340,20 +341,22 @@ class TestInterfacesUpdates(agent_test.TestCase):
         outfiles = self._run_test('gentoo', eth0=interface, version='legacy')
 
         self.assertTrue('net' in outfiles)
-        generated = outfiles['net'].rstrip().split('\n')
-        expected = [
-            '# Automatically generated, do not edit',
-            'modules=( "ifconfig" )',
-            '',
-            '# Label public',
-            'config_eth0=(',
-            '    "192.0.2.42 netmask 255.255.255.0"',
-            ')',
-            'routes_eth0=(',
-            '    "default via 192.0.2.1"',
-            ')',
-        ]
-        self.assertSequenceEqual(generated, expected)
+
+        generated = outfiles['net'].rstrip()
+
+        pattern = ('modules=\( "ifconfig" \)\n*' +
+                   '# Label public\n*' +
+                   'config_eth0=\(\s*"192.0.2.42 netmask 255.255.255.0"\s*\)\n*' +
+                   'routes_eth0=\(\s*"default via 192.0.2.1"\s*\)\n*' +
+                   'dns_servers_eth0=\(\s*"192.0.2.2"\s*\)').format(
+                       ip=interface['ipv4'][0][0],
+                       netmask=interface['ipv4'][0][1],
+                       gateway=interface['gateway4'],
+                       dns=interface['dns'][0]
+                   )
+        expected_regex = re.compile(pattern, re.MULTILINE)
+
+        self.assertRegexpMatches(generated, expected_regex)
 
     def test_gentoo_legacy_ipv6(self):
         """Test setting public IPv6 for Gentoo legacy networking"""
@@ -367,20 +370,21 @@ class TestInterfacesUpdates(agent_test.TestCase):
         outfiles = self._run_test('gentoo', eth0=interface, version='legacy')
 
         self.assertTrue('net' in outfiles)
-        generated = outfiles['net'].rstrip().split('\n')
-        expected = [
-            '# Automatically generated, do not edit',
-            'modules=( "ifconfig" )',
-            '',
-            '# Label public',
-            'config_eth0=(',
-            '    "2001:db8::42/96"',
-            ')',
-            'routes_eth0=(',
-            '    "default via 2001:db8::1"',
-            ')',
-        ]
-        self.assertSequenceEqual(generated, expected)
+
+        generated = outfiles['net'].rstrip()
+        pattern = ('modules=\( "ifconfig" \)\n*' +
+                   '# Label public\n*' +
+                   'config_eth0=\(\s*"{ip}/{netmask_len}"\s*\)\n*' +
+                   'routes_eth0=\(\s*"default via {gateway}"\s*\)\n*' +
+                   'dns_servers_eth0=\(\s*"{dns}"\s*\)').format(
+                       ip=interface['ipv6'][0][0],
+                       netmask_len=interface['ipv6'][0][1],
+                       gateway=interface['gateway6'],
+                       dns=interface['dns'][0]
+                   )
+        expected_regex = re.compile(pattern, re.MULTILINE)
+
+        self.assertRegexpMatches(generated, expected_regex)
 
     def test_gentoo_openrc_ipv4(self):
         """Test setting public IPv4 for Gentoo OpenRC networking"""
@@ -394,17 +398,23 @@ class TestInterfacesUpdates(agent_test.TestCase):
         outfiles = self._run_test('gentoo', eth0=interface, version='openrc')
 
         self.assertTrue('net' in outfiles)
-        generated = outfiles['net'].rstrip().split('\n')
-        expected = [
-            '# Automatically generated, do not edit',
-            'modules="ifconfig"',
-            '',
-            '# Label public',
-            'config_eth0="192.0.2.42 netmask 255.255.255.0"',
-            'routes_eth0="default via 192.0.2.1"',
-            'dns_servers_eth0="192.0.2.2"',
-        ]
-        self.assertSequenceEqual(generated, expected)
+
+        generated = outfiles['net'].rstrip()
+        pattern = ('modules="ifconfig"\n*' +
+                   '# Label public\n*' +
+                   'config_eth0="\s*{ip}/{netmask_len}\s*"\n*' +
+                   'routes_eth0="\s*default via {gateway}\s*"\n*' +
+                   'dns_servers_eth0="\s*{dns}"\s*').format(
+                       ip=interface['ipv4'][0][0],
+                       netmask_len=commands.network.NETMASK_TO_PREFIXLEN[
+                           interface['ipv4'][0][1]
+                       ],
+                       gateway=interface['gateway4'],
+                       dns=interface['dns'][0]
+                   )
+        expected_regex = re.compile(pattern, re.MULTILINE)
+
+        self.assertRegexpMatches(generated, expected_regex)
 
     def test_gentoo_openrc_ipv6(self):
         """Test setting public IPv6 for Gentoo OpenRC networking"""
@@ -418,17 +428,21 @@ class TestInterfacesUpdates(agent_test.TestCase):
         outfiles = self._run_test('gentoo', eth0=interface, version='openrc')
 
         self.assertTrue('net' in outfiles)
-        generated = outfiles['net'].rstrip().split('\n')
-        expected = [
-            '# Automatically generated, do not edit',
-            'modules="ifconfig"',
-            '',
-            '# Label public',
-            'config_eth0="2001:db8::42/96"',
-            'routes_eth0="default via 2001:db8::1"',
-            'dns_servers_eth0="2001:db8::2"',
-        ]
-        self.assertSequenceEqual(generated, expected)
+
+        generated = outfiles['net'].rstrip()
+        pattern = ('modules="ifconfig"\n*' +
+                   '# Label public\n*' +
+                   'config_eth0="\s*{ip}/{netmask_len}\s*"\n*' +
+                   'routes_eth0="\s*default via {gateway}\s*"\n*' +
+                   'dns_servers_eth0="\s*{dns}"\s*').format(
+                       ip=interface['ipv6'][0][0],
+                       netmask_len=interface['ipv6'][0][1],
+                       gateway=interface['gateway6'],
+                       dns=interface['dns'][0]
+                   )
+        expected_regex = re.compile(pattern, re.MULTILINE)
+
+        self.assertRegexpMatches(generated, expected_regex)
 
     def test_suse_ipv4(self):
         """Test setting public IPv4 for SuSE networking"""

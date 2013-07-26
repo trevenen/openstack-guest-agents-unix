@@ -16,28 +16,46 @@
 #     under the License.
 #
 
-"""
-gentoo network helper module
+"""Gentoo Network Helper Module
+
+Configures Gentoo's networking configuration according to upstream
+specifications found here:
+http://www.gentoo.org/doc/en/handbook/handbook-x86.xml?part=4
+
+The basic parts to this configuration are the following files:
+
+    * /etc/conf.d/net - The addressing and routing specification
+    * /etc/hosts - The local host resolution specification
+    * /etc/conf.d/hostname - The system hostname specification
+    * /etc/resolv.conf - The hostname resolver specification
+
+The network addressing and routing configuration has a simple but powerful
+syntax.  The following is an example of this syntax:
+
+    config_eth0="192.168.0.100/24"
+    routes_eth0="default via 192.168.0.1"
+
+Multiple IPs and routes can be specified for a particular interface.  The
+following is an example of this syntax:
+
+    config_eth0="192.168.0.100/24 192.168.0.101/24"
+    routes_eth0="
+      default via 192.168.0.1
+      172.100.100.0/24 via 192.168.0.1
+    "
+
+This allows for cool things (not used here) like the following:
+
+config_eth0="$(for i in $(seq 100 200); do echo -n 192.168.0.${i}/24' '; done)"
+
 """
 
-# Gentoo has two different kinds of network configuration. More recently,
-# there's 'openrc' and previously (for lack of a better term) 'legacy'.
-# They are fairly similar, the differences being more implementation
-# defined (bash vs sh, etc).
-#
-# They both use:
-# - 1 shell-script-style network configuration (/etc/conf.d/net)
-# - multiple IPs per interface
-# - routes are per interface
-# - gateways are per interface
-# - DNS is configured via resolv.conf
-
+import sys
 import os
-import re
-import time
 import subprocess
 import logging
-from cStringIO import StringIO
+
+from datetime import datetime
 
 import commands.network
 
@@ -48,18 +66,18 @@ NETWORK_FILE = "/etc/conf.d/net"
 def configure_network(hostname, interfaces):
     update_files = {}
 
-    # Figure out if this system is running OpenRC
-    if os.path.islink('/sbin/runscript'):
-        data, ifaces = _get_file_data_openrc(interfaces)
+    # Generate new conf.d/net file
+    if os.path.isfile('/sbin/rc'):
+        data, ifaces = _confd_net_file(interfaces)
     else:
-        # Generate new /etc/resolv.conf file
-        filepath, data = commands.network.get_resolv_conf(interfaces)
-        if data:
-            update_files[filepath] = data
-
-        data, ifaces = _get_file_data_legacy(interfaces)
+        data, ifaces = _confd_net_file_legacy(interfaces)
 
     update_files[NETWORK_FILE] = data
+
+    # Generate new resolv.conf file
+    filepath, data = commands.network.get_resolv_conf(interfaces)
+    if data:
+        update_files[filepath] = data
 
     # Generate new hostname file
     data = get_hostname_file(hostname)
@@ -77,7 +95,7 @@ def configure_network(hostname, interfaces):
     # Set hostname
     try:
         commands.network.sethostname(hostname)
-    except Exception, e:
+    except Exception as e:
         logging.error("Couldn't sethostname(): %s" % str(e))
         return (500, "Couldn't set hostname: %s" % str(e))
 
@@ -90,11 +108,12 @@ def configure_network(hostname, interfaces):
             os.symlink('net.lo', scriptpath)
 
         logging.debug('executing %s restart' % scriptpath)
-        p = subprocess.Popen([scriptpath, 'restart'],
-                stdin=pipe, stdout=pipe, stderr=pipe, env={})
-        logging.debug('waiting on pid %d' % p.pid)
-        status = os.waitpid(p.pid, 0)[1]
+        script_proc = subprocess.Popen([scriptpath, 'restart'],
+                            stdin=pipe, stdout=pipe, stderr=pipe, env={})
+        logging.debug('waiting on pid %d' % script_proc.pid)
+        status = os.waitpid(script_proc.pid, 0)[1]
         logging.debug('status = %d' % status)
+
 
         if status != 0:
             return (500, "Couldn't restart network %s: %d" % (ifname, status))
@@ -103,135 +122,134 @@ def configure_network(hostname, interfaces):
 
 
 def get_hostname_file(hostname):
-    """
-    Update hostname on system
-    """
-    return '# Automatically generated, do not edit\nHOSTNAME="%s"\n' % hostname
+    """Given the new hostname creates the hostname configuration content.
 
+    This will generate the /etc/conf.d/hostname configuration file for a Gentoo
+    server running this agent.
 
-def _get_file_data_legacy(interfaces):
-    """
-    Return data for (sub-)interfaces and routes
     """
 
-    ifaces = set()
+    lines = ["# Set to the hostname of this machine"]
+    lines.append(_header())
+    lines.append("HOSTNAME=\"{0}\"".format(hostname))
 
-    network_data = '# Automatically generated, do not edit\n'
-    network_data += 'modules=( "ifconfig" )\n\n'
-
-    ifnames = interfaces.keys()
-    ifnames.sort()
-
-    for ifname in ifnames:
-        interface = interfaces[ifname]
-
-        label = interface['label']
-
-        ip4s = interface['ip4s']
-        ip6s = interface['ip6s']
-
-        gateway4 = interface['gateway4']
-        gateway6 = interface['gateway6']
-
-        if label:
-            network_data += '# Label %s\n' % label
-        network_data += 'config_%s=(\n' % ifname
-
-        for ip in ip4s:
-            network_data += '    "%s netmask %s"\n' % \
-                    (ip['address'], ip['netmask'])
-
-        for ip in ip6s:
-            network_data += '    "%s/%s"\n' % \
-                    (ip['address'], ip['prefixlen'])
-
-        network_data += ')\n'
-
-        routes = []
-        for route in interface['routes']:
-            routes.append('%(network)s netmask %(netmask)s gw %(gateway)s' %
-                          route)
-
-        if gateway4:
-            routes.append('default via %s' % gateway4)
-        if gateway6:
-            routes.append('default via %s' % gateway6)
-
-        if routes:
-            network_data += 'routes_%s=(\n' % ifname
-            for config in routes:
-                network_data += '    "%s"\n' % config
-            network_data += ')\n'
-
-        ifaces.add(ifname)
-
-    return network_data, ifaces
+    return "\n".join(lines)
 
 
-def _get_file_data_openrc(interfaces):
-    """
-    Return data for (sub-)interfaces and routes
+def _header():
+    """Provides a generic textwrapped header for autogenerated files."""
+
+    return """# Creator: NOVA AGENT:
+        # This file was autogenerated at {time} by {comm}.
+        # While it can still be managed manually, definitely not recommended.
+        """.format(comm=sys.argv[0], time=datetime.now())
+
+
+def _confd_net_file(interfaces):
+    """Given the interfaces creates the network configuration content.
+
+    This will generate the /etc/conf.d/net configuration file for a Gentoo
+    server running this agent.
+
     """
 
     ifaces = set()
 
-    network_data = '# Automatically generated, do not edit\n'
-    network_data += 'modules="ifconfig"\n\n'
+    lines = []
+    lines.append(_header())
+    lines.append("")
+    lines.append('modules="ifconfig"')
+    lines.append("")
+    lines.append("")
 
-    ifnames = interfaces.keys()
-    ifnames.sort()
+    for name, interface in interfaces.iteritems():
+        if interface['label']:
+            lines.append("# Label %s" % interface['label'])
+        lines.append("config_{0}=\"".format(name))
+        lines.extend(["  {0}/{1}".format(ip['address'],
+                        commands.network.NETMASK_TO_PREFIXLEN[ip['netmask']]
+                    ) for ip in interface['ip4s'] ])
+        lines.extend([ "  {0}/{1}".format(ip['address'], ip['prefixlen']
+                    ) for ip in interface['ip6s'] ])
+        lines.append("\"")
+        lines.append("")
 
-    for ifname in ifnames:
-        interface = interfaces[ifname]
-
-        label = interface['label']
-
-        ip4s = interface['ip4s']
-        ip6s = interface['ip6s']
-
-        gateway4 = interface['gateway4']
-        gateway6 = interface['gateway6']
+        lines.append("routes_{0}=\"".format(name))
+        lines.extend([ "  {0}/{1} via {2}".format(route['network'],
+                        commands.network.NETMASK_TO_PREFIXLEN[route['netmask']],
+                        route['gateway']
+                    ) for route in interface['routes'] ])
+        if 'gateway4' in interface and interface['gateway4']:
+            lines.append("  default via {0}".format(interface['gateway4']))
+        if 'gateway6' in interface and interface['gateway6']:
+            lines.append("  default via {0}".format(interface['gateway6']))
+        lines.append("\"")
+        lines.append("")
 
         dns = interface['dns']
-
-        iface_data = []
-
-        for ip in ip4s:
-            iface_data.append('%s netmask %s' %
-                              (ip['address'], ip['netmask']))
-
-        for ip in ip6s:
-            iface_data.append('%s/%s' % (ip['address'], ip['prefixlen']))
-
-        if label:
-            network_data += '# Label %s\n' % label
-        network_data += 'config_%s="%s"\n' % (ifname, '\n'.join(iface_data))
-
-        route_data = []
-        for route in interface['routes']:
-            route_data.append('%(network)s/%(prefixlen)s '
-                              'via %(gateway)s' % route)
-
-        if gateway4:
-            route_data.append('default via %s' % gateway4)
-        if gateway6:
-            route_data.append('default via %s' % gateway6)
-
-        if route_data:
-            network_data += 'routes_%s="%s"\n' % (ifname, '\n'.join(route_data))
-
         if dns:
-            network_data += 'dns_servers_%s="%s"\n' % (ifname, '\n'.join(dns))
+            lines.append('dns_servers_{0}="{1}"\n'.format(name,
+                                                          '\n'.join(dns)))
+            lines.append("")
 
-        ifaces.add(ifname)
+        ifaces.add(name)
 
-    return network_data, ifaces
+    return "\n".join(lines), ifaces
+
+
+def _confd_net_file_legacy(interfaces):
+    """
+    Return data for (sub-)interfaces and routes
+    """
+
+    ifaces = set()
+
+    lines = []
+    lines.append(_header())
+    lines.append("")
+    lines.append('modules=( "ifconfig" )')
+    lines.append("")
+    lines.append("")
+
+    for name, interface in interfaces.iteritems():
+        if interface['label']:
+            lines.append("# Label %s" % interface['label'])
+        lines.append("config_{0}=(".format(name))
+
+        lines.extend(["  \"{0} netmask {1}\"".format(ip['address'],
+                    ip['netmask']) for ip in interface['ip4s'] ])
+        lines.extend([ "  \"{0}/{1}\"".format(ip['address'], ip['prefixlen']
+                    ) for ip in interface['ip6s'] ])
+        lines.append(")")
+        lines.append("")
+
+        lines.append("routes_{0}=(".format(name))
+        lines.extend([ "  \"{0} netmask {1} gw {2}\"".format(
+                        route['network'], route['netmask'], route['gateway']
+                    ) for route in interface['routes'] ])
+        if 'gateway4' in interface and interface['gateway4']:
+            lines.append("  \"default via {0}\"".format(interface['gateway4']))
+        if 'gateway6' in interface and interface['gateway6']:
+            lines.append("  \"default via {0}\"".format(interface['gateway6']))
+        lines.append(")")
+        lines.append("")
+
+        dns_list = interface['dns']
+        if dns_list:
+            lines.append("dns_servers_{0}=(".format(name))
+            lines.extend([' "{0}"'.format(dns) for dns in dns_list])
+            lines.append(")")
+            lines.append("")
+
+        ifaces.add(name)
+
+    return "\n".join(lines), ifaces
 
 
 def get_interface_files(interfaces, version):
     if version == 'openrc':
-        data, ifaces = _get_file_data_openrc(interfaces)
+        data, ifaces = _confd_net_file(interfaces)
     else:
-        data, ifaces = _get_file_data_legacy(interfaces)
+        data, ifaces = _confd_net_file_legacy(interfaces)
 
     return {'net': data}
