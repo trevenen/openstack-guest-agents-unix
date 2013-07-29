@@ -37,6 +37,7 @@ NOVA_PYTHONPATH="${NOVA_PYTHONPATH}:${NOVA_PYTHONPATH}/site-packages"
 
 PYTHONPATH="$(python -c 'import sys; print ":".join(sys.path)')"
 export PYTHONPATH="$NOVA_PYTHONPATH:$PYTHONPATH"
+export PYTHONHOME="$NOVA_PYTHONPATH:$PYTHONPATH"
 
 
 depend() {
