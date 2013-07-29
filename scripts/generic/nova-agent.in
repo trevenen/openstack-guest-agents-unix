@@ -59,6 +59,22 @@ pidfile="/var/run/nova-agent.pid"
 logfile="/var/log/nova-agent.log"
 loglevel="info"
 
+#####
+# Setting PYTHONPATH Environment Variable:
+#   Use NOVA-AGENT packaged Python libraries in precedence, if required then
+#     depend on System Python library packages.
+#   This helps with Bintar made on earlier minor version say v2.6 to be used
+#     with system having v2.7 default python setup.
+#####
+NOVA_PYTHONPATH=`ls -l $reallibdir | grep '^d' | awk '{print \$NF}'`
+NOVA_PYTHONPATH=`echo $NOVA_PYTHONPATH | grep 'python[0-9]\.[0-9]'`
+NOVA_PYTHONPATH="${reallibdir}/${NOVA_PYTHONPATH}"
+NOVA_PYTHONPATH="${NOVA_PYTHONPATH}:${NOVA_PYTHONPATH}/site-packages"
+
+PYTHONPATH="$(python -c 'import sys; print ":".join(sys.path)')"
+export PYTHONPATH="$NOVA_PYTHONPATH:$PYTHONPATH"
+
+
 do_start() {
   LD_LIBRARY_PATH="${reallibdir}"
   export LD_LIBRARY_PATH
@@ -101,4 +117,3 @@ case "$1" in
     exit 3
     ;;
 esac
-
