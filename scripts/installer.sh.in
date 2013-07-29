@@ -109,7 +109,7 @@ elif [ -d /etc/init.d ]; then
     ln -s ${dataversdir}/etc/generic/nova-agent /etc/init.d/nova-agent
 elif [ -f /etc/arch-release ] ; then
     if [[ "$(basename $(readlink /sbin/init))" == systemd ]]; then
-        ln -sf ${dataversdir}/etc/systemd/nova-agent.service /etc/systemd/system/nova-agent.service
+        ln -sf ${dataversdir}/etc/systemd/system/nova-agent.service /etc/systemd/system/nova-agent.service
     else
         # Arch Linux
         rm -f /etc/rc.d/nova-agent
