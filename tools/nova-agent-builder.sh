@@ -14,6 +14,8 @@ REPO_DIR='nova-agent'
 
 SYSTEM_NOVA_AGENT='/usr/share/nova-agent'
 BACKUP_NOVA_AGENT="original."$SYSTEM_NOVA_AGENT
+
+NOVA_AGENT_BINTAR="$HOME/nova-agent/artifacts"
 ##### Functions
 shout(){
   echo "***************************************************"
@@ -235,16 +237,21 @@ check_nova_agent(){
   make check
 }
 
+collect_bintar(){
+  mkdir -p $NOVA_AGENT_BINTAR
+  cp $BASE_DIR/$REPO_DIR/nova-agent*.tar.gz $NOVA_AGENT_BINTAR
+}
+
 bintar_nova_agent(){
   check_nova_agent
   make bintar
-  cp $BASE_DIR/$REPO_DIR/nova-agent*.tar.gz $NOVA_AGENT_BINTAR
+  collect_bintar
 }
 
 bintar_nova_agent_without_test(){
   make_nova_agent
   make bintar
-  cp $BASE_DIR/$REPO_DIR/nova-agent*.tar.gz $NOVA_AGENT_BINTAR
+  collect_bintar
 }
 
 ##### MAIN
