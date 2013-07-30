@@ -13,7 +13,7 @@ BASE_DIR="/tmp/test_nova_agent"
 REPO_DIR='nova-agent'
 
 SYSTEM_NOVA_AGENT='/usr/share/nova-agent'
-BACKUP_NOVA_AGENT="original."$SYSTEM_NOVA_AGENT
+BACKUP_NOVA_AGENT=$SYSTEM_NOVA_AGENT".original"
 
 NOVA_AGENT_BINTAR="$HOME/nova-agent/artifacts"
 ##### Functions
