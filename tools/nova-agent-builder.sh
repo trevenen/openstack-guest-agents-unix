@@ -12,6 +12,8 @@ NOVA_AGENT_REPO='git://github.com/rackerlabs/openstack-guest-agents-unix.git'
 BASE_DIR="/tmp/test_nova_agent"
 REPO_DIR='nova-agent'
 
+SYSTEM_NOVA_AGENT='/usr/share/nova-agent'
+BACKUP_NOVA_AGENT="original."$SYSTEM_NOVA_AGENT
 ##### Functions
 shout(){
   echo "***************************************************"
@@ -277,6 +279,11 @@ help="$(cat <<'SYNTAX'
 SYNTAX
 )"
 
+## check if '/usr/share/nova-agent' is present and move it to original.$
+if [ -e $SYSTEM_NOVA_AGENT ]; then
+  mv $SYSTEM_NOVA_AGENT $BACKUP_NOVA_AGENT
+fi
+
 if [ $# -eq 0 ]; then
   shout "Running create Bin tar"
   bintar_nova_agent
@@ -294,4 +301,9 @@ elif [ "$1" = "bintar_no_test" ]; then
   bintar_nova_agent_without_test
 else
   echo $help && exit 1
+fi
+
+# check if '/usr/share/nova-agent' has been backed-up, restore it
+if [ -e $BACKUP_NOVA_AGENT ]; then
+  mv $BACKUP_NOVA_AGENT $SYSTEM_NOVA_AGENT
 fi
