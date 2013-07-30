@@ -240,6 +240,8 @@ check_nova_agent(){
 collect_bintar(){
   mkdir -p $NOVA_AGENT_BINTAR
   cp $BASE_DIR/$REPO_DIR/nova-agent*.tar.gz $NOVA_AGENT_BINTAR
+  shout "Your BINTAR has been copied to $NOVA_AGENT_BINTAR"
+  ls $NOVA_AGENT_BINTAR/*
 }
 
 bintar_nova_agent(){
