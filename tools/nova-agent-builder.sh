@@ -280,7 +280,7 @@ SYNTAX
 )"
 
 ## check if '/usr/share/nova-agent' is present and move it to original.$
-if [ -f $SYSTEM_NOVA_AGENT ]; then
+if [ -d $SYSTEM_NOVA_AGENT ]; then
   mv $SYSTEM_NOVA_AGENT $BACKUP_NOVA_AGENT
 fi
 
@@ -304,6 +304,6 @@ else
 fi
 
 # check if '/usr/share/nova-agent' has been backed-up, restore it
-if [ -f $BACKUP_NOVA_AGENT ]; then
+if [ -d $BACKUP_NOVA_AGENT ]; then
   mv $BACKUP_NOVA_AGENT $SYSTEM_NOVA_AGENT
 fi
