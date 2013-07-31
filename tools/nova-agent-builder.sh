@@ -4,6 +4,12 @@
 ##### W.I.P. works fine for most of cases,
 #####   needs some updates for RHEL & OpenSuse support
 
+##### Fixing LANG for nodes where it ain't
+export LANGUAGE="en_US.UTF-8"
+export LC_ALL="en_US.UTF-8"
+export LC_CTYPE="UTF-8"
+export LANG="en_US.UTF-8"
+
 ##### Var
 INSTALL_PIP='easy_install pip'
 PIP='pip'
@@ -27,7 +33,7 @@ patchelf_git(){
   shout "installing PatchElf from Git"
   PATCHELF_DIR='/tmp/patchelf'
   CURR_DIR=`pwd`
-  if [ -f $PATCHELF_DIR ]; then
+  if [ -d $PATCHELF_DIR ]; then
     cd $PATCHELF_DIR
     git checkout .
     git pull
@@ -47,6 +53,7 @@ python_module_installer()
   shout "Install required modules"
 
   if [ `which pip > /dev/null 2>&1 ; echo $?` -ne 0 ]; then
+    shout "Installing PIP using: $INSTALL_PIP"
     `$INSTALL_PIP`
   fi
 
@@ -73,8 +80,9 @@ get_epel_repo(){
     shout "This version isn't supported." && exit 1
   fi
 
-  curl -L -o /tmp/epel-6.8.rpm $EPEL_URI
-  `rpm -ivh /tmp/epel-6.8.rpm && yum repolist`
+  EPEL_RPM='/tmp/epel-6.8.rpm'
+  curl -L -o $EPEL_RPM $EPEL_URI
+  rpm -ivh $EPEL_RPM && yum repolist
 }
 
 # for distros: RedHat, CentOS, Fedora
@@ -212,7 +220,7 @@ clone_nova_agent(){
   mkdir -p $BASE_DIR
   cd $BASE_DIR
 
-  if [ -f $BASE_DIR/$REPO_DIR ]; then
+  if [ -d $BASE_DIR/$REPO_DIR ]; then
     cd $REPO_DIR
     git checkout .
     git pull
