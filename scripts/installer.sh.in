@@ -23,6 +23,7 @@ exec_prefix="@exec_prefix@"
 sbindir="@sbindir@"
 datadir="@datarootdir@/@PACKAGE@"
 dataversdir="@datarootdir@/@PACKAGE@/@PACKAGE_VERSION@"
+reallibdir="@datarootdir@/@PACKAGE@/@PACKAGE_VERSION@/lib"
 version="@PACKAGE_VERSION@"
 
 umask 077
@@ -97,6 +98,25 @@ fi
 
 # Copy our version subdirectory to the target
 cp -R ${my_dir}/${dataversdir} ${dataversdir}
+
+# Creating Environment Variable file for SYSTEMD service script
+if [[ "$(basename $(readlink /sbin/init))" == systemd ]]; then
+  if [ -f /etc/arch-release ] ; then
+    NOVA_PYTHONPATH=`ls -l ${reallibdir} | grep '^d' | awk '{print \$NF}'`
+    NOVA_PYTHONPATH=`echo ${NOVA_PYTHONPATH} | grep 'python[0-9]\.[0-9]'`
+    NOVA_PYTHONPATH="${reallibdir}/${NOVA_PYTHONPATH}"
+    NOVA_PYTHONPATH="${NOVA_PYTHONPATH}:${NOVA_PYTHONPATH}/site-packages"
+
+    PYTHONPATH="$(python2 -c 'import sys; print ":".join(sys.path)')"
+    PYTHONPATH="${NOVA_PYTHONPATH}:${PYTHONPATH}"
+
+    cat >> /etc/nova-agent.env <<-EOF
+PYTHONPATH=$PYTHONPATH
+EOF
+  else
+    touch /etc/nova-agent.env
+  fi
+fi
 
 # Install the init file symlink
 if [ -h /sbin/runscript ]; then

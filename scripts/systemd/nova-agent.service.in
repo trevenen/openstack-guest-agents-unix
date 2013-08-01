@@ -3,6 +3,7 @@ Description=nova-agent service
 
 [Service]
 Environment=LD_LIBRARY_PATH=@prefix@/share/@PACKAGE@/@PACKAGE_VERSION@/lib
+EnvironmentFile=-/etc/nova-agent.env
 ExecStart=@sbindir@/nova-agent -n -l info @prefix@/share/@PACKAGE@/nova-agent.py
 
 
