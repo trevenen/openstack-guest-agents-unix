@@ -108,9 +108,9 @@ install_pre_requisite_redhat(){
 install_pre_requisite_debian(){
   export RELEASE_FILE='/etc/debian_version'
   cat $RELEASE_FILE
-
+  apt-get -y update
   apt-get -y install git curl
-  apt-get -y install autoconf build-essential python-cjson libxen-dev
+  apt-get -y install autoconf automake build-essential python-cjson libxen-dev
   apt-get -y install python-anyjson python-pip python-crypto libtool python-dev
   patchelf_git
 
