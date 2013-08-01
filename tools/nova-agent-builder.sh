@@ -92,7 +92,7 @@ install_pre_requisite_redhat(){
 
   get_epel_repo
 
-  yum -y install git autoconf gcc gcc-c++ automake libtool
+  yum -y install git autoconf gcc gcc-c++ make automake libtool
   yum -y install python-crypto python-devel
 
   yum install -y centos-release-xen.x86_64 &&  yum repolist
@@ -110,7 +110,7 @@ install_pre_requisite_debian(){
   cat $RELEASE_FILE
   apt-get -y update
   apt-get -y install git curl
-  apt-get -y install autoconf automake build-essential python-cjson libxen-dev
+  apt-get -y install autoconf make automake build-essential python-cjson libxen-dev
   apt-get -y install python-anyjson python-pip python-crypto libtool python-dev
   patchelf_git
 
