@@ -237,7 +237,9 @@ make_nova_agent(){
 
   clone_nova_agent
 
-  sh autogen.sh && ./configure && make
+  sh autogen.sh
+  ./configure --sbindir=/usr/sbin
+  make
 }
 
 check_nova_agent(){
