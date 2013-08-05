@@ -22,6 +22,11 @@ SYSTEM_NOVA_AGENT='/usr/share/nova-agent'
 BACKUP_NOVA_AGENT=$SYSTEM_NOVA_AGENT".original"
 
 NOVA_AGENT_BINTAR="$HOME/nova-agent/artifacts"
+
+# create leading components of DEST except the last, then copy SOURCE to DEST
+# required by ./configure for Makefile to use it, doesn't Work in FreeBSD
+export INSTALL_D="D"
+
 ##### Functions
 shout(){
   echo "***************************************************"
@@ -143,6 +148,7 @@ install_pre_requisite_archlinux(){
 
 # for distros: FreeBSD
 install_pre_requisite_freebsd(){
+    export INSTALL_D=""
     uname -a
 
     pkg_add -r git autogen automake wget

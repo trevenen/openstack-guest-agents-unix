@@ -7,6 +7,8 @@ AM_INIT_AUTOMAKE([foreign -Wall -Werror tar-ustar])
 
 AC_PREFIX_DEFAULT([/usr])
 
+AC_ARG_VAR(INSTALL_D, "INSTALL_D allows to feed -D at install")
+
 AC_ARG_ENABLE([coverage],
   [AS_HELP_STRING([--enable-coverage],
     [Toggle coverage @<:@default=off@:>@])],
