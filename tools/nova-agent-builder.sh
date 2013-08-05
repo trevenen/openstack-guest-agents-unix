@@ -166,7 +166,12 @@ install_pre_requisite_freebsd(){
     python setup.py install
     cd -
 
-    alias make='gmake' # patchelf and nova-agent require 'gmake' instead of 'make'
+    # patchelf and nova-agent require 'gmake' instead of 'make'
+    #  on default shell on FreeBSD `alias make='gmake'` doesn't work
+    function make(){
+      gmake $@
+    }
+
     patchelf_git
 }
 
