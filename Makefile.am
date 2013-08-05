@@ -10,6 +10,8 @@ EXTRA_DIST = install_libs.py install_modules.py nova-agent.py \
 			scripts/generic/nova-agent scripts/gentoo/nova-agent \
 			scripts/freebsd/nova-agent
 
+DISTRO=`/usr/bin/uname`
+
 data_DATA = nova-agent.py
 
 nodist_noinst_DATA = agentlib.so \
@@ -84,7 +86,11 @@ bintar: all
 	@install -m 700 $(top_srcdir)/scripts/generic/nova-agent ${FULLBINTARDIR}/${etcdir}/generic/nova-agent
 	@install -m 700 $(top_srcdir)/scripts/gentoo/nova-agent ${FULLBINTARDIR}/${etcdir}/gentoo/nova-agent
 	@install -m 700 $(top_srcdir)/scripts/freebsd/nova-agent ${FULLBINTARDIR}/${etcdir}/freebsd/nova-agent
-	@install -Dm644 $(top_srcdir)/scripts/systemd/nova-agent.service ${FULLBINTARDIR}/${etcdir}/systemd/system/nova-agent.service
+	ifeq ( $(DISTRO), "FreeBSD")
+		@install -m644 $(top_srcdir)/scripts/systemd/nova-agent.service ${FULLBINTARDIR}/${etcdir}/systemd/system/nova-agent.service
+	else
+		@install -Dm644 $(top_srcdir)/scripts/systemd/nova-agent.service ${FULLBINTARDIR}/${etcdir}/systemd/system/nova-agent.service
+	endif
 	@chown -R 0:0 ${FULLBINTARDIR}
 # agent-smith requires that we don't have a subdir in the tar
 # once agent-smith is dead, we can use this
