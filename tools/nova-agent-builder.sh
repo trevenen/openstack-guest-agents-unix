@@ -160,8 +160,8 @@ install_pre_requisite_freebsd(){
 
     # installing pyxenstore
     cd /tmp
-    wget https://pypi.python.org/packages/source/p/pyxenstore/pyxenstore-0.0.2.tar.gz
-    tar -zvxf pyxenstore-0.0.2.tar.gz
+    wget --no-check-certificate https://pypi.python.org/packages/source/p/pyxenstore/pyxenstore-0.0.2.tar.gz
+    tar zvxf pyxenstore-0.0.2.tar.gz
     cd pyxenstore-0.0.2
     python setup.py install
     cd -
