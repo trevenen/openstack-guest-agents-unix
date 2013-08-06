@@ -34,6 +34,7 @@ shout(){
   echo "***************************************************"
 }
 
+# install patchelf to Git
 patchelf_git(){
   shout "installing PatchElf from Git"
   PATCHELF_DIR='/tmp/patchelf'
@@ -53,6 +54,7 @@ patchelf_git(){
   cd $CURR_DIR
 }
 
+# installing python modules
 python_module_installer()
 {
   shout "Install required modules"
@@ -73,6 +75,7 @@ major_version(){
   export OS_VERSION_MAJOR=`echo $OS_VERSION | awk -F'.' '{print $1}'`
 }
 
+# install EPEL repo for CentOS systems
 get_epel_repo(){
   shout "enabling EPEL repo"
   major_version
@@ -89,6 +92,17 @@ get_epel_repo(){
   EPEL_RPM='/tmp/epel-6.8.rpm'
   curl -L -o $EPEL_RPM $EPEL_URI
   rpm -ivh $EPEL_RPM && yum repolist
+}
+
+# install pyxenstore from source
+install_pyxenstore(){
+  cd /tmp
+  PYXENSTORE_URL="https://pypi.python.org/packages/source/p/pyxenstore/pyxenstore-0.0.2.tar.gz"
+  wget --no-check-certificate $PYXENSTORE_URL
+  tar zvxf pyxenstore-0.0.2.tar.gz
+  cd pyxenstore-0.0.2
+  python setup.py install
+  cd -
 }
 
 # for distros: RedHat, CentOS, Fedora
@@ -166,12 +180,7 @@ install_pre_requisite_freebsd(){
     cd -
 
     # installing pyxenstore
-    cd /tmp
-    wget --no-check-certificate https://pypi.python.org/packages/source/p/pyxenstore/pyxenstore-0.0.2.tar.gz
-    tar zvxf pyxenstore-0.0.2.tar.gz
-    cd pyxenstore-0.0.2
-    python setup.py install
-    cd -
+    install_pyxenstore
 
     # patchelf and nova-agent require 'gmake' instead of 'make'
     #  on default shell on FreeBSD `alias make='gmake'` doesn't work
@@ -181,6 +190,23 @@ install_pre_requisite_freebsd(){
 
     patchelf_git
 }
+
+# for distros: OpenSuSE
+install_pre_requisite_suse(){
+  zypper install -y git-core autogen automake libtool
+  zypper install -y python-devel xen-devel python-pycrypto python-mox patchelf
+
+  # installing pyxenstore
+  install_pyxenstore
+
+  zypper install -y --force-resolution python-unittest2
+
+  # nova-agent require 'gmake' instead of 'make'
+  function make(){
+    gmake $@
+  }
+}
+
 
 install_pre_requisite(){
   if [ -f /etc/redhat-release ]; then
@@ -197,6 +223,9 @@ install_pre_requisite(){
 
   elif [ `uname -s` == 'FreeBSD' ] ; then
     install_pre_requisite_freebsd
+
+  elif [ -f /etc/SuSE-release ] ; then
+    install_pre_requisite_suse
 
   else
     echo 'Un-Managed Distro.'
