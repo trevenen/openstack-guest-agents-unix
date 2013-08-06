@@ -80,8 +80,36 @@ def install_libs(binary, installdir):
         if os.path.exists(installdir + '/' + fname):
             # Already installed
             continue
-        print "Installing %s" % lib
+        print("Installing %s" % lib)
         shutil.copy2(lib, installdir)
+
+
+def fix_ubuntu12_lib(data_dir):
+    """ Ubuntu 12.04 Fix for include and config resources. """
+    def copy_resource(src, dest):
+        if not os.path.exists(dest) and os.path.exists(src):
+            shutil.copytree(src, dest)
+
+    import platform
+    if set(["Ubuntu", '12.04']).issubset(set(platform.dist())):
+        major, minor = sys.version_info[0:2]
+        python_ver = "python%s.%s" % (major, minor)
+        for path in sys.path:
+            if os.path.exists("%s/config" % path):
+                config_source = os.path.join(path, "config")
+        config_destination = os.path.join(data_dir,
+                                          "lib",
+                                          python_ver,
+                                          "config")
+        include_source = os.path.join("/usr/include", python_ver)
+        include_destination = os.path.join(data_dir,
+                                           "local",
+                                           "include",
+                                          python_ver)
+
+        copy_resource(config_source, config_destination)
+        copy_resource(include_source, include_destination)
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
@@ -128,3 +156,7 @@ if __name__ == "__main__":
             shutil.copy2(d, installdir)
             # Recurse
             install_libs(d, installdir)
+
+    # BINTAR created on Ubuntu 12.04 required /usr/lib/python2.x/config and
+    # /usr/include/python2.x to the internal DATADIR of NovaAgent
+    fix_ubuntu12_lib(datadir)
