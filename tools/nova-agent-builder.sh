@@ -82,7 +82,8 @@ get_epel_repo(){
   elif [ $OS_VERSION_MAJOR -eq 5 ]; then
     EPEL_URI=$EPEL_URI"/5/i386/epel-release-5-4.noarch.rpm"
   else
-    shout "This version isn't supported." && exit 1
+    shout "This version isn't supported."
+    exit_now 1
   fi
 
   EPEL_RPM='/tmp/epel-6.8.rpm'
@@ -198,7 +199,8 @@ install_pre_requisite(){
     install_pre_requisite_freebsd
 
   else
-    echo 'Un-Managed Distro.' && exit 1
+    echo 'Un-Managed Distro.'
+    exit_now 1
 
   fi
 }
@@ -309,6 +311,14 @@ help="$(cat <<'SYNTAX'
 SYNTAX
 )"
 
+function exit_now(){
+  # check if '/usr/share/nova-agent' has been backed-up, restore it
+  if [ -d $BACKUP_NOVA_AGENT ]; then
+    mv $BACKUP_NOVA_AGENT $SYSTEM_NOVA_AGENT
+  fi
+  exit $1
+}
+
 ## check if '/usr/share/nova-agent' is present and move it to original.$
 if [ -d $SYSTEM_NOVA_AGENT ]; then
   mv $SYSTEM_NOVA_AGENT $BACKUP_NOVA_AGENT
@@ -319,7 +329,8 @@ if [ $# -eq 0 ]; then
   bintar_nova_agent
 elif [ $# -gt 1 ]; then
   shout "Help"
-  echo $help && exit 1
+  echo $help
+  exit_now 1
 elif [ "$1" = "test" ]; then
   shout "Running Checks"
   check_nova_agent
@@ -330,7 +341,8 @@ elif [ "$1" = "bintar_no_test" ]; then
   shout "Running create Bin tar without tests"
   bintar_nova_agent_without_test
 else
-  echo $help && exit 1
+  echo $help
+  exit_now 1
 fi
 
 # check if '/usr/share/nova-agent' has been backed-up, restore it
