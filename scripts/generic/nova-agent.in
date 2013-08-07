@@ -71,7 +71,9 @@ NOVA_PYTHONPATH=`echo $NOVA_PYTHONPATH | grep 'python[0-9]\.[0-9]'`
 NOVA_PYTHONPATH="${reallibdir}/${NOVA_PYTHONPATH}"
 NOVA_PYTHONPATH="${NOVA_PYTHONPATH}:${NOVA_PYTHONPATH}/site-packages"
 
-PYTHONPATH="$(python -c 'import sys; print ":".join(sys.path)')"
+if [ `which python > /dev/null 2>&1 ; echo $?` -eq 0 ]; then
+  PYTHONPATH="$(python -c 'import sys; print ":".join(sys.path)')"
+fi
 export PYTHONPATH="$NOVA_PYTHONPATH:$PYTHONPATH"
 
 
