@@ -44,10 +44,10 @@ if test "$PYTHON_CFLAGS" = "" -a "$PYTHON_LIB" = ""; then
 
                 lib_dir_paths=( "lib" "lib64" )
                 gcc_multiarch=`gcc  --print-multiarch` ; is_gcc_multiarch=$?
-                if [ is_gcc_multiarch -eq 0 ]; then
-                  lib_dir_paths[2]="lib/"$(gcc_multiarch)
+                if [[ $is_gcc_multiarch -eq 0 ]]; then
+                  lib_dir_paths[[2]]="lib/${gcc_multiarch}"
                 fi
-                for libdir in ${lib_dir_paths[@]} ; do
+                for libdir in "${lib_dir_paths[[@]]}" ; do
                     so_path=${dir}/${libdir}
                     if test -f ${so_path}/lib${python}.so ; then
                         # We're done.  Found header and library
