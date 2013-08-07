@@ -41,7 +41,13 @@ if test "$PYTHON_CFLAGS" = "" -a "$PYTHON_LIB" = ""; then
     for python in "python2.7" "python2.6" "python2.5" "python2.4" ; do
         for dir in $prefix "/usr/local" "/usr"; do
             if test -f ${dir}/include/${python}/Python.h ; then
-                for libdir in "lib/"$(gcc -print-multiarch) "lib" "lib64" ; do
+
+                lib_dir_paths=( "lib" "lib64" )
+                gcc_multiarch=`gcc  --print-multiarch` ; is_gcc_multiarch=$?
+                if [ is_gcc_multiarch -eq 0 ]; then
+                  lib_dir_paths[2]="lib/"$(gcc_multiarch)
+                fi
+                for libdir in ${lib_dir_paths[@]} ; do
                     so_path=${dir}/${libdir}
                     if test -f ${so_path}/lib${python}.so ; then
                         # We're done.  Found header and library
