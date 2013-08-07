@@ -41,13 +41,17 @@ if test "$PYTHON_CFLAGS" = "" -a "$PYTHON_LIB" = ""; then
     for python in "python2.7" "python2.6" "python2.5" "python2.4" ; do
         for dir in $prefix "/usr/local" "/usr"; do
             if test -f ${dir}/include/${python}/Python.h ; then
-                if test -f ${dir}/lib/lib${python}.so -o -f ${dir}/lib64/lib${python}.so ; then
-                    # We're done.  Found header and library
-                    PYTHON_VER=${python}
-                    PYTHON_CFLAGS="-I${dir}/include/${python}"
-                    PYTHON_LIB="-l${python}"
-                    break
-                fi
+                for libdir in "lib/"$(gcc -print-multiarch) "lib" "lib64" ; do
+                    so_path=${dir}/${libdir}
+                    if test -f ${so_path}/lib${python}.so ; then
+                        # We're done.  Found header and library
+                        PYTHON_VER=${python}
+                        PYTHON_CFLAGS="-I${dir}/include/${python}"
+                        PYTHON_LIB="-l${python}"
+                        PYTHON_LDFLAGS="-L${so_path}"
+                        break
+                    fi
+                done
             fi
         done
     done
@@ -59,9 +63,9 @@ if test "$PYTHON_CFLAGS" = "" -a "$PYTHON_LIB" = ""; then
     fi
 fi
 
-CFLAGS="$CFLAGS -fno-strict-aliasing"
+CFLAGS="$CFLAGS -fno-strict-aliasing $PYTHON_CFLAGS"
 # Make sure to add this, so we don't need to manually add it on FreeBSD
-LDFLAGS="$LDFLAGS -L/usr/local/lib"
+LDFLAGS="$LDFLAGS $PYTHON_LDFLAGS -L/usr/local/lib"
 
 AC_MSG_CHECKING([that the python library can be linked])
 
